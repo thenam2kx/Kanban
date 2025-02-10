@@ -1,17 +1,17 @@
 import { alpha, createTheme } from '@mui/material/styles'
 import { brand, gray, green, orange, red } from './color.custom'
-import { typography } from './custom.typography';
+import { typography } from './custom.typography'
 
 declare module '@mui/material/styles' {
   interface Theme {
-    nexthub: {
+    kanban: {
       appHeader: string
       appFooter: string
       appAside: string
     };
   }
   interface ThemeOptions {
-    nexthub?: {
+    kanban?: {
       appHeader?: string
       appFooter?: string
       appAside?: string
@@ -21,11 +21,11 @@ declare module '@mui/material/styles' {
 
 const APP_HEADER = '56px'
 const APP_FOOTER = '40px'
-const APP_ASIDE = '360px'
+const APP_ASIDE = '240px'
 
 // A custom theme for this app
 const theme = createTheme({
-  nexthub: {
+  kanban: {
     appHeader: APP_HEADER,
     appFooter: APP_FOOTER,
     appAside: APP_ASIDE
