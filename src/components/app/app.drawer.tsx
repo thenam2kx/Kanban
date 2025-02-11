@@ -17,6 +17,7 @@ import { useAppSelector } from '@/redux/hooks'
 import { useNavigate } from 'react-router'
 import Link from '@mui/material/Link'
 import { Link as RouterLink } from 'react-router'
+import ModeThemeSelect from '@/themes/mode.theme'
 
 const openedMixin = (theme: Theme): CSSObject => ({
   width: theme.kanban.appAside,
@@ -155,6 +156,20 @@ const AppDrawer = () => {
         </List>
 
         <Divider />
+
+        <List sx={{ mb: 3 }}>
+          <ListItem disablePadding sx={{ display: 'block' }}>
+            <ListItemButton
+              sx={{
+                minHeight: 48,
+                px: 2.5,
+                justifyContent: stateDrawer ? 'initial' : 'center'
+              }}
+            >
+              <ModeThemeSelect />
+            </ListItemButton>
+          </ListItem>
+        </List>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }} />
         <Divider />

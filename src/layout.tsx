@@ -5,8 +5,6 @@ import Box from '@mui/material/Box'
 import { Outlet } from 'react-router'
 import { useAppSelector } from './redux/hooks'
 
-const drawerWidth = 240
-
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
   open?: boolean
 }>(({ theme, open }) => ({
@@ -16,7 +14,7 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen
   }),
-  marginLeft: `-${drawerWidth}px`,
+  marginLeft: open ? `-${theme.kanban.appAside}px` : `-${theme.spacing(7)}px`,
   ...(open && {
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.easeOut,
@@ -36,7 +34,7 @@ const Layout = () => {
       <AppBarTop />
       <AppDrawer />
       <Main open={stateDrawer}>
-        <Box component='div' sx={{ height: 64 }} />
+        <Box sx={{ height: 64 }} />
         <Outlet />
       </Main>
     </Box>
