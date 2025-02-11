@@ -1,100 +1,121 @@
-import { Card, CardContent, Typography, Box } from '@mui/material'
-import { BarChart, AttachMoney, FileCopy } from '@mui/icons-material'
-import AssignmentIcon from '@mui/icons-material/Assignment'
-import { formatCurrencyVND } from '@/utils/helpers'
+import { useTheme } from '@mui/material/styles'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Chip from '@mui/material/Chip'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart'
+import { areaElementClasses } from '@mui/x-charts/LineChart'
 
-interface MetricCardProps {
-  icon: 'chart' | 'money' | 'task' | 'file'
-  label: string
+export type IMetricCard = {
+  title: string
   value: string
-  subtext?: string
-  isQuantity?: boolean
-  subIcon?: React.ReactNode
+  interval: string
+  trend: 'up' | 'down' | 'neutral'
+  data: number[]
 }
 
-const MetricCard = (props: MetricCardProps) => {
-  const { icon, label, value, subtext, isQuantity, subIcon } = props
+function getDaysInMonth(month: number, year: number) {
+  const date = new Date(year, month, 0)
+  const monthName = date.toLocaleDateString('en-US', {
+    month: 'short'
+  })
+  const daysInMonth = date.getDate()
+  const days = []
+  let i = 1
+  while (days.length < daysInMonth) {
+    days.push(`${monthName} ${i}`)
+    i += 1
+  }
+  return days
+}
 
-  const getIcon = () => {
-    switch (icon) {
-    case 'chart':
-      return <BarChart sx={{ color: '#6366f1', fontSize: 28 }} />
-    case 'money':
-      return <AttachMoney sx={{ color: '#6366f1', fontSize: 28 }} />
-    case 'task':
-      return <AssignmentIcon sx={{ color: '#6366f1', fontSize: 28 }} />
-    case 'file':
-      return <FileCopy sx={{ color: '#6366f1', fontSize: 28 }} />
-    }
+function AreaGradient({ color, id }: { color: string, id: string }) {
+  return (
+    <defs>
+      <linearGradient id={id} x1="50%" y1="0%" x2="50%" y2="100%">
+        <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+        <stop offset="100%" stopColor={color} stopOpacity={0} />
+      </linearGradient>
+    </defs>
+  )
+}
+
+const MetricCard = ({ title, value, interval, trend, data }: IMetricCard) => {
+  const theme = useTheme()
+  const daysInWeek = getDaysInMonth(4, 2024)
+
+  const trendColors = {
+    up:
+      theme.palette.mode === 'light'
+        ? theme.palette.success.main
+        : theme.palette.success.dark,
+    down:
+      theme.palette.mode === 'light'
+        ? theme.palette.error.main
+        : theme.palette.error.dark,
+    neutral:
+      theme.palette.mode === 'light'
+        ? theme.palette.grey[400]
+        : theme.palette.grey[700]
   }
 
-  return (
-    <Card
-      sx={{
-        bgcolor: 'background.default',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
-        borderRadius: 3,
-        height: '100%'
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '12px'
-          }}
-        >
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: 2,
-              bgcolor: '#f1f5f9',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {getIcon()}
-          </Box>
+  const labelColors = {
+    up: 'success' as const,
+    down: 'error' as const,
+    neutral: 'default' as const
+  }
 
-          <Box>
-            <Typography
-              color='text.secondary'
-              sx={{ mb: 1, fontSize: '0.875rem' }}
+  const color = labelColors[trend]
+  const chartColor = trendColors[trend]
+  const trendValues = { up: '+25%', down: '-25%', neutral: '+5%' }
+
+  return (
+    <Card variant="outlined" sx={{ height: '100%', flexGrow: 1 }}>
+      <CardContent>
+        <Typography component="h2" variant="subtitle2" gutterBottom>
+          {title}
+        </Typography>
+        <Stack
+          direction="column"
+          sx={{ justifyContent: 'space-between', flexGrow: '1', gap: 1 }}
+        >
+          <Stack sx={{ justifyContent: 'space-between' }}>
+            <Stack
+              direction="row"
+              sx={{ justifyContent: 'space-between', alignItems: 'center' }}
             >
-              {label}
+              <Typography variant="h4" component="p">
+                {value}
+              </Typography>
+              <Chip size="small" color={color} label={trendValues[trend]} />
+            </Stack>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {interval}
             </Typography>
-            <Typography
-              variant='h4'
+          </Stack>
+          <Box sx={{ width: '100%', height: 50 }}>
+            <SparkLineChart
+              colors={[chartColor]}
+              data={data}
+              area
+              showHighlight
+              showTooltip
+              xAxis={{
+                scaleType: 'band',
+                data: daysInWeek // Use the correct property 'data' for xAxis
+              }}
               sx={{
-                fontWeight: 'bold',
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
+                [`& .${areaElementClasses.root}`]: {
+                  fill: `url(#area-gradient-${value})`
+                }
               }}
             >
-              {
-                isQuantity ? value : formatCurrencyVND(+value)
-              }
-            </Typography>
-            {subtext && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {subIcon}
-                <Typography
-                  sx={{
-                    mt: 0.5,
-                    color: subtext.includes('+') ? '#10b981' : 'text.secondary',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  {subtext}
-                </Typography>
-              </Box>
-            )}
+              <AreaGradient color={chartColor} id={`area-gradient-${value}`} />
+            </SparkLineChart>
           </Box>
-        </Box>
+        </Stack>
       </CardContent>
     </Card>
   )
