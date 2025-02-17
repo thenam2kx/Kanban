@@ -15,6 +15,8 @@ import OutlinedInput from '@mui/material/OutlinedInput'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import LoadingButton from '@mui/lab/LoadingButton'
+import SigninSchema from '@/validations/auth.validations/signin.validate'
+import { changeForgotPasswordAPI } from '@/apis/auth.apis'
 
 const ChangePasswordPage = () => {
   const [passwordError, setPasswordError] = useState<boolean>(false)
@@ -42,26 +44,29 @@ const ChangePasswordPage = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (verifyPasswordError || passwordError) {
-      toast.error('🦄 Mật khẩu không được để trống!')
-      return
-    }
-
-    if (email && email.length < 0) {
-      toast.error('🦄 Email không hợp lệ!')
-      return
-    }
-
     const data = new FormData(event.currentTarget)
     const password= data.get('password') as string
 
-    const condition = {
-      email: email as string,
-      password: password as string
+    // Validate data
+    const { error } = SigninSchema.validate({ email, password }, { abortEarly: false })
+    if (error) {
+      error.details.forEach((err) => {
+        if (err.path[0] === 'password') {
+          setPasswordError(true)
+          setPasswordErrorMessage(err.message)
+        }
+      })
+      return
     }
-
     try {
       setIsLoading(true)
+      const res = await changeForgotPasswordAPI(email, password)
+      if (res.data) {
+        toast.success(res.message)
+        navigate('/signin')
+      } else {
+        toast.error(res.error)
+      }
 
     } catch (error) {
       // eslint-disable-next-line no-console

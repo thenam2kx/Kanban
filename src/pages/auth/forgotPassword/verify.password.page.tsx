@@ -10,6 +10,8 @@ import LoadingButton from '@mui/lab/LoadingButton'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate, useSearchParams } from 'react-router'
+import VerifyPasswordSchema from '@/validations/auth.validations/verify.password.validate'
+import { sendForgotPasswordAPI, verifyPasswordAPI } from '@/apis/auth.apis'
 
 const VerifyPasswordPage = () => {
   const [verifyCodeError, setVerifyCodeError] = useState(false)
@@ -22,43 +24,53 @@ const VerifyPasswordPage = () => {
   const email = searchParams.get('email') ?? ''
 
 
-  const validateInputs = () => {
-    const verifyCode = document.getElementById('verifyCode') as HTMLInputElement
-    let isValid = true
-    if (!verifyCode.value) {
-      setVerifyCodeError(true)
-      setVerifyCodeErrorMessage('Mã kích hoạt không được để trống!')
-      isValid = false
-    } else {
-      setVerifyCodeError(false)
-      setVerifyCodeErrorMessage('')
-    }
-    return isValid
-  }
-
   const handleResend = async () => {
+    try {
+      setIsLoadingResend(true)
 
+      const res = await sendForgotPasswordAPI(email)
+      if (res.data) {
+        toast.success(`🦄 ${res.message}`)
+      } else {
+        toast.error(`🦄 ${res.message}`)
+      }
 
-    toast.success('🦄 Tính năng đang phát triển...')
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('🚀 ~ handleSubmit ~ error:', error)
+    } finally {
+      setIsLoadingResend(false)
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (verifyCodeError) {
-      toast.error('🦄 Email or password invalid!')
-      return
-    }
-
+    // Get data from form
     const data = new FormData(event.currentTarget)
     const verifyCode = data.get('verifyCode') as string
-    const dataReq = {
-      code: verifyCode,
-      email: email
+
+    // Validate data
+    const { error } = VerifyPasswordSchema.validate({ email, code: verifyCode }, { abortEarly: false })
+    if (error) {
+      error.details.forEach((err) => {
+        if (err.path[0] === 'code') {
+          setVerifyCodeError(true)
+          setVerifyCodeErrorMessage(err.message)
+        }
+      })
+      return
     }
 
     try {
       setIsLoading(true)
+      const res = await verifyPasswordAPI(email, verifyCode)
+      if (res.data) {
+        toast.success(res.message)
+        navigate(`/change-password?email=${encodeURIComponent(email)}`)
+      } else {
+        toast.error(res.message)
+      }
 
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -128,7 +140,6 @@ const VerifyPasswordPage = () => {
             type="submit"
             size="medium"
             loading={isLoading}
-            onClick={() => validateInputs()}
             loadingPosition="center"
             variant="contained"
             sx={{ '&.Mui-disabled': { bgcolor: 'primary.main' } }}

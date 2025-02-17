@@ -23,7 +23,7 @@ import { Link as RouterLink, useNavigate } from 'react-router'
 import { signinAPI } from '@/apis/auth.apis'
 import { useAppDispatch } from '@/redux/hooks'
 import { signin } from '@/redux/slices/auth.slice'
-import SigninSchema from '@/validations/signin.validate'
+import SigninSchema from '@/validations/auth.validations/signin.validate'
 
 const SigninPage = () => {
   const [emailError, setEmailError] = useState(false)
