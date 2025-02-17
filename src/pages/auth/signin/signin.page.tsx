@@ -19,7 +19,11 @@ import OutlinedInput from '@mui/material/OutlinedInput'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Link as RouterLink } from 'react-router'
+import { Link as RouterLink, useNavigate } from 'react-router'
+import { signinAPI } from '@/apis/auth.apis'
+import { useAppDispatch } from '@/redux/hooks'
+import { signin } from '@/redux/slices/auth.slice'
+import SigninSchema from '@/validations/signin.validate'
 
 const SigninPage = () => {
   const [emailError, setEmailError] = useState(false)
@@ -28,7 +32,8 @@ const SigninPage = () => {
   const [passwordErrorMessage, setPasswordErrorMessage] = useState('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showPassword, setShowPassword] = useState(false)
-
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
 
   const handleClickShowPassword = () => setShowPassword((show) => !show)
   const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -41,25 +46,43 @@ const SigninPage = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
-    if (emailError || passwordError) {
-      toast.error('🦄 Email or password invalid!')
-      return
-    }
-
+    // Get data from form
     const data = new FormData(event.currentTarget)
     const email = data.get('email') as string
     const password= data.get('password') as string
-    // const remember= data.get('remember')
 
-    // try {
-    //   setIsLoading(true)
+    // Validate data
+    const { error } = SigninSchema.validate({ email, password }, { abortEarly: false })
+    if (error) {
+      error.details.forEach((err) => {
+        if (err.path[0] === 'email') {
+          setEmailError(true)
+          setEmailErrorMessage(err.message)
+        }
+        if (err.path[0] === 'password') {
+          setPasswordError(true)
+          setPasswordErrorMessage(err.message)
+        }
+      })
+    }
 
-    // } catch (error) {
-    //   console.log('🚀 ~ handleSubmit ~ error:', error)
-    // } finally {
-    //   setIsLoading(false)
-    // }
+    try {
+      setIsLoading(true)
+      const res = await signinAPI({ username: email, password })
+      if (res.data) {
+        dispatch(signin({ user: res.data.user, accessToken: res.data.access_token }))
+        toast.success(`🦄 ${res.message}`)
+        navigate('/')
+      } else {
+        toast.error(`🦄 ${res.message}`)
+      }
+
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('🚀 ~ handleSubmit ~ error:', error)
+    } finally {
+      setIsLoading(false)
+    }
 
   }
 
