@@ -8,6 +8,25 @@ export const signinAPI = async (data: ISignin) => {
   })
 }
 
+export const signupAPI = async (data: ISignup) => {
+  const url = '/api/v1/auth/signup'
+  return axios.post<IBackendResponse<ISigninResponse>>(url, {
+    fullname: data.fullname,
+    email: data.email,
+    password: data.password
+  })
+}
+
+export const verifyAccountAPI = async (email: string, code: string) => {
+  const url = '/api/v1/auth/verify-email'
+  return axios.post<IBackendResponse<ISigninResponse>>(url, { email, code })
+}
+
+export const reSendEmailAPI = async (email: string) => {
+  const url = '/api/v1/auth/resend-email'
+  return axios.post<IBackendResponse<ISigninResponse>>(url, { email })
+}
+
 export const sendForgotPasswordAPI = async (email: string) => {
   const url = '/api/v1/auth/forgot-password'
   return axios.post<IBackendResponse<ISigninResponse>>(url, { email })

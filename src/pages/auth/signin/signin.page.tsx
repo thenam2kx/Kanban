@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
+import { Link as RouterLink, useNavigate } from 'react-router'
 import Box from '@mui/material/Box'
 import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
@@ -19,7 +20,6 @@ import OutlinedInput from '@mui/material/OutlinedInput'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { Link as RouterLink, useNavigate } from 'react-router'
 import { signinAPI } from '@/apis/auth.apis'
 import { useAppDispatch } from '@/redux/hooks'
 import { signin } from '@/redux/slices/auth.slice'
@@ -73,6 +73,9 @@ const SigninPage = () => {
         dispatch(signin({ user: res.data.user, accessToken: res.data.access_token }))
         toast.success(`🦄 ${res.message}`)
         navigate('/')
+      } else if (res.statusCode === 401) {
+        toast.error(`🦄 ${res.message}`)
+        navigate(`/verify-account?email=${encodeURIComponent(email)}`)
       } else {
         toast.error(`🦄 ${res.message}`)
       }

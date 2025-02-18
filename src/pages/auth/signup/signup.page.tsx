@@ -16,6 +16,8 @@ import LoadingButton from '@mui/lab/LoadingButton'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import { useNavigate } from 'react-router'
+import SignupSchema from '@/validations/auth.validations/signup.validate'
+import { signupAPI } from '@/apis/auth.apis'
 
 const SignupPage = () => {
   const [emailError, setEmailError] = useState(false)
@@ -37,54 +39,51 @@ const SignupPage = () => {
     event.preventDefault()
   }
 
-  const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement
-    const password = document.getElementById('password') as HTMLInputElement
-    const name = document.getElementById('name') as HTMLInputElement
-
-    let isValid = true
-
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true)
-      setEmailErrorMessage('Vui lòng nhập địa chỉ email.')
-      isValid = false
-    } else {
-      setEmailError(false)
-      setEmailErrorMessage('')
-    }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true)
-      setPasswordErrorMessage('Mật khẩu phải lớn hơn 6 ký tự.')
-      isValid = false
-    } else {
-      setPasswordError(false)
-      setPasswordErrorMessage('')
-    }
-
-    if (!name.value || name.value.length < 1) {
-      setNameError(true)
-      setNameErrorMessage('Họ tên không được để trống.')
-      isValid = false
-    } else {
-      setNameError(false)
-      setNameErrorMessage('')
-    }
-
-    return isValid
-  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (nameError || emailError || passwordError) {
-      toast.error('🦄 Email hoặc mật khẩu không hợp lệ!')
-      return
-    }
 
+    // Get data from form
     const data = new FormData(event.currentTarget)
     const fullname = data.get('name') as string
     const email = data.get('email') as string
     const password = data.get('password') as string
+
+    // Validate data
+    const { error } = SignupSchema.validate({ fullname, email, password }, { abortEarly: false })
+    if (error) {
+      error.details.forEach((err) => {
+        if (err.path[0] === 'email') {
+          setEmailError(true)
+          setEmailErrorMessage(err.message)
+        }
+        if (err.path[0] === 'password') {
+          setPasswordError(true)
+          setPasswordErrorMessage(err.message)
+        }
+        if (err.path[0] === 'fullname') {
+          setNameError(true)
+          setNameErrorMessage(err.message)
+        }
+      })
+    }
+
+    try {
+      setIsLoading(true)
+      const data: ISignup = { email, fullname, password }
+      const res = await signupAPI(data)
+      if (res.data) {
+        toast.success(res.message)
+        navigate(`/verify-account?email=${encodeURIComponent(email)}`)
+      } else {
+        toast.success(res.message)
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('🚀 ~ handleSubmit ~ error:', error)
+    } finally {
+      setIsLoading(false)
+    }
 
   }
 
@@ -183,7 +182,6 @@ const SignupPage = () => {
           <LoadingButton
             type="submit"
             size="medium"
-            onClick={validateInputs}
             loading={isLoading}
             loadingPosition="center"
             variant="contained"

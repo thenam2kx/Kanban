@@ -12,6 +12,7 @@ import { toast } from 'react-toastify'
 import { useNavigate, useSearchParams } from 'react-router'
 import VerifyPasswordSchema from '@/validations/auth.validations/verify.password.validate'
 import { sendForgotPasswordAPI, verifyPasswordAPI } from '@/apis/auth.apis'
+import ResendPassword from './resend.password'
 
 const VerifyPasswordPage = () => {
   const [verifyCodeError, setVerifyCodeError] = useState(false)
@@ -122,7 +123,7 @@ const VerifyPasswordPage = () => {
             />
           </FormControl>
 
-          <LoadingButton
+          {/* <LoadingButton
             size="medium"
             loading={isLoadingResend}
             onClick={() => handleResend()}
@@ -134,7 +135,8 @@ const VerifyPasswordPage = () => {
             }}
           >
             Gửi lại mã kích hoạt
-          </LoadingButton>
+          </LoadingButton> */}
+          <ResendPassword />
 
           <LoadingButton
             type="submit"
