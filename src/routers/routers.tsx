@@ -11,23 +11,31 @@ import CustomerPage from '@/pages/customer/customer.page'
 import OrderPage from '@/pages/order/order.page'
 import NotFoundPage from '@/pages/notfound/notfound.page'
 import AccountPage from '@/pages/account/account.page'
+import PrivateRouter from './private.router'
+import { useAppSelector } from '@/redux/hooks'
 
 
 const Routers = () => {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
+
   return (
     <Routes>
-      <Route path='/' element={<Layout />}>
-        <Route index element={<DashboardPage />} />
-        <Route path='/orders' element={<OrderPage />} />
-        <Route path='/customers' element={<CustomerPage />} />
-        <Route path='/account' element={<AccountPage />} />
+      <Route element={<PrivateRouter isAllowed={isAuthenticated ? true : false} redirectTo='/signin' />}>
+        <Route path='/' element={<Layout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path='/orders' element={<OrderPage />} />
+          <Route path='/customers' element={<CustomerPage />} />
+          <Route path='/account' element={<AccountPage />} />
+        </Route>
       </Route>
-      <Route path='/signin' element={<SigninPage />} />
-      <Route path='/signup' element={<SignupPage />} />
-      <Route path='/verify-account' element={<VerifyPage />} />
-      <Route path='/forgot-password' element={<ForgotPasswordPage />} />
-      <Route path='/verify-password' element={<VerifyPasswordPage />} />
-      <Route path='/change-password' element={<ChangePasswordPage />} />
+      <Route element={<PrivateRouter isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>
+        <Route path='/signin' element={<SigninPage />} />
+        <Route path='/signup' element={<SignupPage />} />
+        <Route path='/verify-account' element={<VerifyPage />} />
+        <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+        <Route path='/verify-password' element={<VerifyPasswordPage />} />
+        <Route path='/change-password' element={<ChangePasswordPage />} />
+      </Route>
       <Route path='*' element={<NotFoundPage />} />
     </Routes>
   )

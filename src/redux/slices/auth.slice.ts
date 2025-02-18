@@ -1,5 +1,14 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { getUserAPI } from '@/apis/user.api'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+// export const fetchAccount = createAsyncThunk(
+//   'account/fetchAccount',
+//   async () => {
+//     const response = await getUserAPI()
+//     console.log('🚀 ~ response:', response)
+//     return response.data
+//   }
+// )
 
 interface AuthState {
   isAuthenticated: boolean

@@ -46,4 +46,17 @@ declare global {
     }
     permissions: string[]
   }
+
+  interface IUserAccount {
+    _id: string
+    fullname: string
+    email: string
+    phone: string
+    role: {
+      _id: string
+      name: string
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    permissions: any[]
+  }
 }
