@@ -13,6 +13,7 @@ import NotFoundPage from '@/pages/notfound/notfound.page'
 import AccountPage from '@/pages/account/account.page'
 import PrivateRouter from './private.router'
 import { useAppSelector } from '@/redux/hooks'
+import DetailCustomer from '@/pages/customer/detail.customer/detail.customer'
 
 
 const Routers = () => {
@@ -25,6 +26,7 @@ const Routers = () => {
           <Route index element={<DashboardPage />} />
           <Route path='/orders' element={<OrderPage />} />
           <Route path='/customers' element={<CustomerPage />} />
+          <Route path='/customers/:id' element={<DetailCustomer />} />
           <Route path='/account' element={<AccountPage />} />
         </Route>
       </Route>

@@ -1,14 +1,5 @@
-import { getUserAPI } from '@/apis/user.api'
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-
-// export const fetchAccount = createAsyncThunk(
-//   'account/fetchAccount',
-//   async () => {
-//     const response = await getUserAPI()
-//     console.log('🚀 ~ response:', response)
-//     return response.data
-//   }
-// )
+import axios from 'axios'
 
 interface AuthState {
   isAuthenticated: boolean
@@ -33,6 +24,22 @@ const initialState: AuthState = {
   accessToken: null,
   user: null
 }
+
+export const fetchAccount = createAsyncThunk(
+  'auth/fetchAccount',
+  async () => {
+    // const response = await axios.get('http://localhost:8080/api/v1/auth/account', {
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     Accept: 'application/json',
+    //     Authorization: accessToken ? `Bearer ${accessToken}` : ''
+    //   }
+    // })
+    // console.log('🚀 ~ accessToken:', accessToken)
+    // console.log('🚀 ~ response:', response)
+    // return response.data
+  }
+)
 
 const authSlice = createSlice({
   name: 'auth',
@@ -59,6 +66,22 @@ const authSlice = createSlice({
       state.isRefreshToken = action.payload?.status ?? false
       state.errorRefreshToken = action.payload?.message ?? ''
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAccount.pending, (state) => {
+        state.isLoading = true
+        // state.isAuthenticated = false
+      })
+      .addCase(fetchAccount.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.isAuthenticated = true
+        state.user = action.payload ?? null
+      })
+      .addCase(fetchAccount.rejected, (state) => {
+        state.isLoading = false
+        // state.isAuthenticated = false
+      })
   }
 })
 

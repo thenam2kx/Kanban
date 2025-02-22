@@ -1,6 +1,27 @@
 import axios from '@/config/axios.customize'
 
-export const getUserAPI = async () => {
+export const getAccountAPI = async () => {
   const url = '/api/v1/auth/account'
   return axios.get<IBackendResponse<IUserAccount>>(url)
+}
+
+export const fetchListUserAPI = async ({ current, pageSize }: { current: number, pageSize: number }) => {
+  const url = `/api/v1/users?current=${current}&pageSize=${pageSize}&populate=role&fields=name,role.name`
+  return axios.get<IBackendResponse<ICustomer[]>>(url)
+}
+
+export const fetchInfoUserAPI = async (customerId: string) => {
+  const url = `/api/v1/users/${customerId}`
+  return axios.get<IBackendResponse<ICustomer>>(url)
+}
+
+export const fetchListRoleAPI = async () => {
+  const url = '/api/v1/roles?current=1&pageSize=20&populate=permissions&fields=name,permissions.name,permissions.apiPath,permissions.method,permissions.module'
+  return axios.get<IBackendResponse<IRole>>(url)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const updateUserAPI = async ({ userId, dataUpdate }: { userId: string, dataUpdate: any }) => {
+  const url = `/api/v1/users/${userId}`
+  return axios.patch<IBackendResponse<IUser>>(url, { ...dataUpdate })
 }

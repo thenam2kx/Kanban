@@ -129,6 +129,7 @@ const AppBarTop = () => {
       position: 'fixed',
       top: 0,
       right: 0,
+      zIndex: 999,
       transition: 'all 0.15s linear',
       width: stateDrawer ? `calc(100% - ${theme.kanban.appAside})` : `calc(100% - ${theme.spacing(7)})`
     }}>

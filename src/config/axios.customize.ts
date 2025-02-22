@@ -7,7 +7,6 @@ interface AccessTokenResponse {
   access_token: string;
 }
 
-
 let accessToken = store.getState().auth.accessToken
 store.subscribe(() => {
   const newAccessToken = store.getState().auth.accessToken
