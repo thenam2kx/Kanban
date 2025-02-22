@@ -1,7 +1,6 @@
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import PeopleIcon from '@mui/icons-material/People'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import { styled, Theme, CSSObject } from '@mui/material/styles'
@@ -13,11 +12,12 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
-import { useAppSelector } from '@/redux/hooks'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { useNavigate } from 'react-router'
 import Link from '@mui/material/Link'
 import { Link as RouterLink } from 'react-router'
 import ModeThemeSelect from '@/themes/mode.theme'
+import { signout } from '@/redux/slices/auth.slice'
 
 const openedMixin = (theme: Theme): CSSObject => ({
   width: theme.kanban.appAside,
@@ -76,7 +76,12 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const AppDrawer = () => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const stateDrawer = useAppSelector(state => state.app.isOpenDrawer)
+
+  const handleSignOut = () => {
+    dispatch(signout())
+  }
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -174,17 +179,12 @@ const AppDrawer = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }} />
         <Divider />
         <List sx={{ mb: 3 }}>
-          {[
-            { text: 'Đăng xuất', icon: <LogoutIcon />, url: '/signout' },
-            { text: 'Đăng nhập', icon: <LoginIcon />, url: '/signin' }
-          ].slice(0, 1).map((item) => (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton onClick={() => navigate(`${item.url}`)}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleSignOut()}>
+              <ListItemIcon><LogoutIcon /></ListItemIcon>
+              <ListItemText primary={'Đăng xuất'} />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Drawer>
     </Box>

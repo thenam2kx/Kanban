@@ -1,50 +1,113 @@
-import { Chip } from '@mui/material'
 import Card from '@mui/material/Card'
 import {
   DataGrid,
   GridColDef,
-  GridRowsProp
+  GridPaginationModel,
+  gridPageCountSelector,
+  useGridApiContext,
+  useGridSelector
 } from '@mui/x-data-grid'
+import Chip from '@mui/material/Chip'
+import Pagination from '@mui/material/Pagination'
 import Avatar from '@mui/material/Avatar'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
-import { faker } from '@faker-js/faker'
-import { useState } from 'react'
-import DetailCustomer from './detail.customer/detail.customer'
-
+import { useEffect, useState } from 'react'
+import { fetchListUserAPI } from '@/apis/user.api'
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye'
+import { useNavigate } from 'react-router'
+import EditCustomer from './edit.customer/edit.customer'
+import { setOpenDrawerEdit, setUserId } from '@/redux/slices/user.slice'
+import { useAppDispatch } from '@/redux/hooks'
+import DeleteCustomer from './action.customer/delete.customer'
 
 const renderStatus = (status: 'Online' | 'Offline') => {
   const colors: { [index: string]: 'success' | 'default' } = {
     Online: 'success',
     Offline: 'default'
   }
-
   return <Chip label={status} color={colors[status]} size="small" />
 }
 
+const renderRole = (roles: 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'EMPLOYEE' | 'USER') => {
+  switch (roles) {
+  case 'SUPER_ADMIN': {
+    return <Chip label={'SUPER_ADMIN'} color={'error'} size="small" />
+  }
+  case 'ADMIN':
+    return <Chip label={'ADMIN'} color={'warning'} size="small" />
+  case 'PARTNER':
+    return <Chip label={'PARTNER'} color={'primary'} size="small" />
+  case 'EMPLOYEE':
+    return <Chip label={'EMPLOYEE'} color={'secondary'} size="small" />
+  case 'USER':
+    return <Chip label={'USER'} color={'default'} size="small" />
+  default:
+    return <Chip label={'USER'} color={'default'} size="small" />
+  }
 
-const rows: GridRowsProp = []
-for (let i = 0; i < 100; i++) {
-  const status = faker.helpers.arrayElement(['Online', 'Offline'])
-  rows.push({
-    id: faker.string.uuid(),
-    customerName: faker.internet.username(),
-    status,
-    address: faker.location.streetAddress() + ', ' + faker.location.city() + ' - ' + faker.location.state() + ' - ' + faker.location.country(),
-    phone: faker.helpers.arrayElement(['0363560798', '0123456789', '0388700628', '0987654321']),
-    viewsPerUser: faker.number.int({ min: 10, max: 50 }),
-    actions: `${faker.number.int({ min: 1, max: 5 })}m ${faker.number.int({ min: 1, max: 59 })}s`
-  })
+}
+
+interface IMeta {
+  current: number
+  pages: number
+  pageSize: number
+  total: number
 }
 
 const CustomerPage = () => {
-  const [open, setOpen] = useState(false)
-  const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [listUser, setListUser] = useState<ICustomer[]>([])
+  const [meta, setMeta] = useState<IMeta>({
+    current: 1,
+    pages: 0,
+    pageSize: 10,
+    total: 0
+  })
+  const [currentPage, setCurrentPage] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10
+  })
+
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+
+  const handleEdit = (userId: string) => {
+    dispatch(setOpenDrawerEdit(true))
+    dispatch(setUserId(userId))
+  }
+
+  const CustomPagination = () => {
+    const apiRef = useGridApiContext()
+    const pageCount = useGridSelector(apiRef, gridPageCountSelector)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const paginationModel = useGridSelector(apiRef, (state: { pagination: { paginationModel: any } }) =>
+      state.pagination.paginationModel
+    )
+
+    const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+      apiRef.current.setPage(value - 1)
+    }
+
+    return (
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2 }}>
+        <Typography>
+          Trang {paginationModel.page + 1} / {pageCount}
+        </Typography>
+        <Pagination
+          color="primary"
+          count={pageCount}
+          page={paginationModel.page + 1}
+          onChange={handlePageChange}
+          showFirstButton
+          showLastButton
+        />
+      </Stack>
+    )
+  }
 
   const columns: GridColDef[] = [
     {
@@ -53,64 +116,51 @@ const CustomerPage = () => {
       flex: 1.5,
       minWidth: 200,
       renderCell: (params) => (
-        <>
-          <Stack direction="row" spacing={2} sx={{ padding: '8px', alignItems: 'center', height: '100%' }}>
-            <Avatar
-              alt={params.value}
-              src="https://picsum.photos/200/200"
-              sx={{ height: 40, width: 40 }}
-            />
-            <Box>
-              <Typography sx={{ fontSize: '16px', color: 'text.primary' }}>
-                {params.value}
-              </Typography>
-              <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>
-                {params.value}
-              </Typography>
-            </Box>
-          </Stack>
-        </>
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ padding: '8px', alignItems: 'center', height: '100%' }}
+        >
+          <Avatar alt={params.row?.avatar} src={params.row?.avatar} sx={{ height: 40, width: 40 }} />
+          <Box>
+            <Typography sx={{ fontSize: '16px', color: 'text.primary' }}>{params.row?.fullname}</Typography>
+            <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>{params.row?.email}</Typography>
+          </Box>
+        </Stack>
       )
+    },
+    {
+      field: 'phone',
+      headerName: 'Số điện thoại',
+      headerAlign: 'left',
+      align: 'left',
+      flex: 1,
+      minWidth: 80
+    },
+    {
+      field: 'role',
+      headerName: 'Vai trò',
+      headerAlign: 'left',
+      align: 'left',
+      flex: 1,
+      minWidth: 80,
+      // valueGetter: (params) => params?.name || 'USER'
+      renderCell: (params) => renderRole(params.row?.role?.name)
     },
     {
       field: 'status',
       headerName: 'Trạng thái',
       flex: 0.5,
       minWidth: 80,
-      renderCell: (params) => renderStatus(params.value)
-    },
-    {
-      field: 'phone',
-      headerName: 'Số điện thoại',
-      headerAlign: 'right',
-      align: 'right',
-      flex: 1,
-      minWidth: 80
-    },
-    {
-      field: 'address',
-      headerName: 'Địa chỉ',
-      headerAlign: 'right',
-      align: 'right',
-      flex: 1,
-      minWidth: 100
-    },
-    {
-      field: 'viewsPerUser',
-      headerName: 'Views per User',
-      headerAlign: 'right',
-      align: 'right',
-      flex: 1,
-      minWidth: 120
+      renderCell: (params) => renderStatus(params.row?.isVerified ? 'Online' : 'Offline')
     },
     {
       field: 'actions',
       headerName: 'Hành động',
       headerAlign: 'right',
       align: 'right',
-      // flex: 1,
       minWidth: 120,
-      renderCell: () => (
+      renderCell: (params) => (
         <Stack
           direction="row"
           spacing={1}
@@ -118,16 +168,39 @@ const CustomerPage = () => {
           justifyContent={'flex-end'}
           sx={{ height: '100%' }}
         >
-          <IconButton aria-label="edit" onClick={handleOpen}>
-            <EditIcon />
+          <IconButton aria-label="view" size='small' onClick={() => navigate(`/customers/${params.row?._id}`)}>
+            <RemoveRedEyeIcon fontSize='small' />
           </IconButton>
-          <IconButton aria-label="edit">
-            <DeleteIcon />
+          <IconButton aria-label="edit" size='small' onClick={() => handleEdit(params.row?._id)}>
+            <EditIcon fontSize='small' />
           </IconButton>
+          <DeleteCustomer />
         </Stack>
       )
     }
   ]
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoading(true)
+        const res = await fetchListUserAPI({ current: currentPage.page + 1, pageSize: currentPage.pageSize })
+        if (res?.data) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          setListUser(res.data?.result)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          setMeta(res.data?.meta)
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('🚀 ~ error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    })()
+  }, [currentPage])
 
   return (
     <Card
@@ -137,27 +210,27 @@ const CustomerPage = () => {
         flexDirection: 'column',
         gap: '8px',
         flexGrow: 1,
-        maxHeight: 'calc(100vh - 150px)'
+        maxHeight: 'calc(100vh - 120px)'
       }}
     >
       <DataGrid
-        checkboxSelection
-        rows={rows}
+        rows={listUser}
         columns={columns}
         rowHeight={100}
+        getRowId={(row) => row._id}
+        loading={listUser.length === 0 || isLoading}
         getRowClassName={(params) =>
           params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
         }
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10 },
-            rowCount: 10
-          }
-        }}
+        paginationModel={currentPage}
+        onPaginationModelChange={(model) => setCurrentPage(model)}
+        paginationMode="server"
+        rowCount={meta.total}
         pageSizeOptions={[10, 20, 50]}
         disableColumnResize
         disableRowSelectionOnClick
         density="compact"
+        slots={{ pagination: CustomPagination }}
         slotProps={{
           filterPanel: {
             filterFormProps: {
@@ -187,7 +260,7 @@ const CustomerPage = () => {
         sx={{ flexGrow: 1, border: 'none' }}
       />
 
-      <DetailCustomer handleClose={handleClose} open={open} />
+      <EditCustomer />
     </Card>
   )
 }

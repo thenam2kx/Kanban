@@ -10,6 +10,8 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router'
 import { CardHeader } from '@mui/material'
+import ForgotPasswordSchema from '@/validations/auth.validations/forgot.password.validate'
+import { sendForgotPasswordAPI } from '@/apis/auth.apis'
 
 const ForgotPasswordPage = () => {
   const [emailError, setEmailError] = useState(false)
@@ -36,16 +38,32 @@ const ForgotPasswordPage = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (emailError) {
-      toast.error('🦄 Email không hợp lệ!')
-      return
-    }
-
+    // Get data from form
     const data = new FormData(event.currentTarget)
     const email = data.get('email') as string
 
+    // Validate data
+    const { error } = ForgotPasswordSchema.validate({ email }, { abortEarly: false })
+    if (error) {
+      error.details.forEach((err) => {
+        if (err.path[0] === 'email') {
+          setEmailError(true)
+          setEmailMessage(err.message)
+        }
+      })
+      return
+    }
+
     try {
       setIsLoading(true)
+
+      const res = await sendForgotPasswordAPI(email)
+      if (res.data) {
+        toast.success(`🦄 ${res.message}`)
+        navigate(`/verify-password?email=${encodeURIComponent(email)}`)
+      } else {
+        toast.error(`🦄 ${res.message}`)
+      }
 
     } catch (error) {
       // eslint-disable-next-line no-console

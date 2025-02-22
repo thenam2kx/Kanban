@@ -2,6 +2,9 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import { persistStore, persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
 import appReducer from './slices/app.slice'
+import authReducer from './slices/auth.slice'
+import userReducer from './slices/user.slice'
+import roleReducer from './slices/role.slice'
 
 // Config redux-persist
 const persistConfig = {
@@ -12,7 +15,10 @@ const persistConfig = {
 }
 
 const rootReducer = combineReducers({
-  app: appReducer
+  app: appReducer,
+  auth: authReducer,
+  user: userReducer,
+  role: roleReducer
 })
 
 // Create persist reducer

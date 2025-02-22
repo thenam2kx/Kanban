@@ -10,12 +10,13 @@ import LoadingButton from '@mui/lab/LoadingButton'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate, useSearchParams } from 'react-router'
+import { verifyAccountAPI } from '@/apis/auth.apis'
+import ResendEmail from './resend.email'
 
 const VerifyPage = () => {
   const [verifyCodeError, setVerifyCodeError] = useState(false)
   const [verifyCodeErrorMessage, setVerifyCodeErrorMessage] = useState('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isLoadingResend, setIsLoadingResend] = useState<boolean>(false)
 
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -36,20 +37,33 @@ const VerifyPage = () => {
     return isValid
   }
 
-  const handleResend = async () => {
-
-  }
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (verifyCodeError) {
-      toast.error('🦄 Email or password invalid!')
+      toast.error('🦄 Email không được để trống!')
       return
     }
 
     const data = new FormData(event.currentTarget)
-    const verifyCode = data.get('verifyCode') as string
+    const code = data.get('verifyCode') as string
+
+    try {
+      setIsLoading(true)
+      const res = await verifyAccountAPI(email, code)
+      if (res.data) {
+        toast.success(`🦄 ${res.message}!`)
+        navigate('/auth/signin')
+      } else {
+        toast.error(`🦄 ${res.message}!`)
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('🚀 ~ handleSubmit ~ error:', error)
+    } finally {
+      setIsLoading(false)
+    }
+
   }
 
 
@@ -94,19 +108,7 @@ const VerifyPage = () => {
             />
           </FormControl>
 
-          <LoadingButton
-            size="medium"
-            loading={isLoadingResend}
-            onClick={() => handleResend()}
-            loadingPosition="center"
-            variant="text"
-            sx={{
-              textTransform: 'none',
-              '&.Mui-disabled': { bgcolor: 'primary.main' }
-            }}
-          >
-            Gửi lại mã kích hoạt
-          </LoadingButton>
+          <ResendEmail />
 
           <LoadingButton
             type="submit"
