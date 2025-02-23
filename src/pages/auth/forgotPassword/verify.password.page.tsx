@@ -11,38 +11,38 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate, useSearchParams } from 'react-router'
 import VerifyPasswordSchema from '@/validations/auth.validations/verify.password.validate'
-import { sendForgotPasswordAPI, verifyPasswordAPI } from '@/apis/auth.apis'
+import { verifyPasswordAPI } from '@/apis/auth.apis'
 import ResendPassword from './resend.password'
 
 const VerifyPasswordPage = () => {
   const [verifyCodeError, setVerifyCodeError] = useState(false)
   const [verifyCodeErrorMessage, setVerifyCodeErrorMessage] = useState('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isLoadingResend, setIsLoadingResend] = useState<boolean>(false)
+  // const [isLoadingResend, setIsLoadingResend] = useState<boolean>(false)
 
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') ?? ''
 
 
-  const handleResend = async () => {
-    try {
-      setIsLoadingResend(true)
+  // const handleResend = async () => {
+  //   try {
+  //     setIsLoadingResend(true)
 
-      const res = await sendForgotPasswordAPI(email)
-      if (res.data) {
-        toast.success(`🦄 ${res.message}`)
-      } else {
-        toast.error(`🦄 ${res.message}`)
-      }
+  //     const res = await sendForgotPasswordAPI(email)
+  //     if (res.data) {
+  //       toast.success(`🦄 ${res.message}`)
+  //     } else {
+  //       toast.error(`🦄 ${res.message}`)
+  //     }
 
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log('🚀 ~ handleSubmit ~ error:', error)
-    } finally {
-      setIsLoadingResend(false)
-    }
-  }
+  //   } catch (error) {
+  //     // eslint-disable-next-line no-console
+  //     console.log('🚀 ~ handleSubmit ~ error:', error)
+  //   } finally {
+  //     setIsLoadingResend(false)
+  //   }
+  // }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()

@@ -9,6 +9,13 @@ declare global {
     data?: T
   }
 
+  interface IMeta {
+    current: number
+    pages: number
+    pageSize: number
+    total: number
+  }
+
   interface ISignin {
     username: string
     password: string
@@ -71,71 +78,49 @@ declare global {
     }[]
   }
 
-  interface ICustomer {
-    _id: string;
-    fullname: string;
-    email: string;
-    password: string;
-    phone?: string;
-    role: {
-      _id: string;
-      name: string
-    }
-    avatar?: string;
-    gender: string;
-    birthday?: Date;
-    address?: {
-      street: string;
-      city: string;
-      state: string;
-      country: string;
-    }
-    isVerified?: boolean;
-    verificationCode?: string;
-    expiredVerificationCode?: Date;
-    resetPasswordCode?: string;
-    expiredResetPasswordCode?: string;
-    resetPasswordDate?: Date;
-    refresh_token?: string
-    type: string;
-    createdBy?: {
-      _id: mongoose.Schema.Types.ObjectId;
-      email: string;
-    };
-    updatedBy?: {
-      _id: mongoose.Schema.Types.ObjectId;
-      email: string;
-    };
-    deletedBy?: {
-      _id: mongoose.Schema.Types.ObjectId;
-      email: string;
-    };
-    createdAt?: Date;
-    updatedAt?: Date;
-    deletedAt?: Date;
-  }
-
-  interface IUser {
-    _id: string;
-    fullname: string;
-    email: string;
-    password: string;
-    phone?: string;
-    role: {
-      _id: string;
-      name: string
-    }
-    avatar?: string;
-    gender: string;
-    birthday?: Date;
-    address?: {
-      street: string;
-      city: string;
-      state: string;
-      country: string;
-    }
-    isVerified?: boolean;
-  }
+  // interface ICustomer {
+  //   _id: string;
+  //   fullname: string;
+  //   email: string;
+  //   password: string;
+  //   phone?: string;
+  //   role: {
+  //     _id: string;
+  //     name: string
+  //   }
+  //   avatar?: string;
+  //   gender: string;
+  //   birthday?: Date;
+  //   address?: {
+  //     street: string;
+  //     city: string;
+  //     state: string;
+  //     country: string;
+  //   }
+  //   isVerified?: boolean;
+  //   verificationCode?: string;
+  //   expiredVerificationCode?: Date;
+  //   resetPasswordCode?: string;
+  //   expiredResetPasswordCode?: string;
+  //   resetPasswordDate?: Date;
+  //   refresh_token?: string
+  //   type: string;
+  //   createdBy?: {
+  //     _id: mongoose.Schema.Types.ObjectId;
+  //     email: string;
+  //   };
+  //   updatedBy?: {
+  //     _id: mongoose.Schema.Types.ObjectId;
+  //     email: string;
+  //   };
+  //   deletedBy?: {
+  //     _id: mongoose.Schema.Types.ObjectId;
+  //     email: string;
+  //   };
+  //   createdAt?: Date;
+  //   updatedAt?: Date;
+  //   deletedAt?: Date;
+  // }
 
   interface IRole {
     _id: string;

@@ -6,15 +6,44 @@ import Popper from '@mui/material/Popper'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
+import { deleteUserAPI } from '@/apis/user.api'
+import { toast } from 'react-toastify'
+import { fetchListUsers, setIsLoading } from '@/redux/slices/user.slice'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 
-const DeleteCustomer = () => {
+const DeleteCustomer = ({ userId }: { userId: string }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(anchorEl ? null : event.currentTarget)
   }
   const openPopper = Boolean(anchorEl)
   const id = openPopper ? 'delete-popper' : undefined
+  const dispatch = useAppDispatch()
+  const listPaginate = useAppSelector(state => state.user.listPaginate)
+
+  const handleDeleteUser = async () => {
+    setAnchorEl(null)
+    try {
+      dispatch(setIsLoading(true))
+      const res = await deleteUserAPI(userId)
+      if (res.data) {
+        toast.success(res.message)
+
+        // Re-call api fetch list users
+        await dispatch(fetchListUsers({
+          current: listPaginate.page === 0 ? listPaginate.page + 1 : listPaginate.page,
+          pageSize: listPaginate.pageSize
+        }))
+      } else {
+        toast.success(res.message)
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('🚀 ~ handleDeleteUser ~ error:', error)
+    } finally {
+      dispatch(setIsLoading(false))
+    }
+  }
 
   return (
     <>
@@ -39,7 +68,7 @@ const DeleteCustomer = () => {
           <Typography sx={{ py: '12px' }}>Bạn có chắc chắn muốn xóa</Typography>
           <Stack spacing={2} direction="row" justifyContent={'flex-end'}>
             <Button variant="text" size='small' onClick={handleClick}>Hủy</Button>
-            <Button variant="contained" size='small'>Xóa</Button>
+            <Button variant="contained" size='small' onClick={handleDeleteUser}>Xóa</Button>
           </Stack>
         </Box>
       </Popper>

@@ -10,9 +10,6 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import OrderHistory from './order.history'
-import EditCustomer from '../edit.customer/edit.customer'
-import { useAppDispatch } from '@/redux/hooks'
-import { setOpenDrawerEdit, setUserId } from '@/redux/slices/user.slice'
 
 const SectionTitle = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -27,16 +24,8 @@ const InfoRow = styled(Grid)(({ theme }) => ({
 
 
 const DetailCustomer = () => {
-  const [user, setUser] = useState<ICustomer | undefined>()
+  const [user, setUser] = useState<IUser | undefined>()
   const { id } = useParams<{ id: string }>()
-  console.log('🚀 ~ DetailCustomer ~ user:', user)
-  const dispatch = useAppDispatch()
-
-  const handleEdit = () => {
-    dispatch(setUserId(id as string))
-    dispatch(setOpenDrawerEdit(true))
-  }
-
 
   useEffect(() => {
     (async () => {
@@ -112,7 +101,7 @@ const DetailCustomer = () => {
       <Paper sx={{ p: 3, mb: 3 }}>
         <SectionTitle>
           <Typography variant="h6">Thông tin chi tiết</Typography>
-          <IconButton size="small" onClick={() => handleEdit()}>
+          <IconButton size="small">
             <EditIcon />
           </IconButton>
         </SectionTitle>
@@ -197,11 +186,7 @@ const DetailCustomer = () => {
           </Grid>
         </Grid>
       </Paper>
-
-
       <OrderHistory />
-      <EditCustomer />
-
     </Box>
   )
 }

@@ -70,7 +70,17 @@ const SigninPage = () => {
       setIsLoading(true)
       const res = await signinAPI({ username: email, password })
       if (res.data) {
-        dispatch(signin({ user: res.data.user, accessToken: res.data.access_token }))
+        const user = {
+          ...res.data.user,
+          permissions: res.data.user.permissions.map((permission: string) => ({
+            _id: permission,
+            name: permission,
+            apiPath: '',
+            method: '',
+            module: ''
+          }))
+        }
+        dispatch(signin({ user, accessToken: res.data.access_token }))
         toast.success(`🦄 ${res.message}`)
         navigate('/')
       } else if (res.statusCode === 401) {

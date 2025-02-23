@@ -2,7 +2,6 @@ import Card from '@mui/material/Card'
 import {
   DataGrid,
   GridColDef,
-  GridPaginationModel,
   gridPageCountSelector,
   useGridApiContext,
   useGridSelector
@@ -15,13 +14,12 @@ import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import EditIcon from '@mui/icons-material/Edit'
-import { useEffect, useState } from 'react'
-import { fetchListUserAPI } from '@/apis/user.api'
+import { useEffect } from 'react'
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye'
 import { useNavigate } from 'react-router'
-import EditCustomer from './edit.customer/edit.customer'
-import { setOpenDrawerEdit, setUserId } from '@/redux/slices/user.slice'
-import { useAppDispatch } from '@/redux/hooks'
+import EditCustomer from './update.customer/update.customer'
+import { fetchListUsers, setIsLoading, setListPaginate, setOpenModalUpdate, setUserId } from '@/redux/slices/user.slice'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import DeleteCustomer from './action.customer/delete.customer'
 
 const renderStatus = (status: 'Online' | 'Offline') => {
@@ -51,32 +49,17 @@ const renderRole = (roles: 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'EMPLOYEE' | 'U
 
 }
 
-interface IMeta {
-  current: number
-  pages: number
-  pageSize: number
-  total: number
-}
-
 const CustomerPage = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [listUser, setListUser] = useState<ICustomer[]>([])
-  const [meta, setMeta] = useState<IMeta>({
-    current: 1,
-    pages: 0,
-    pageSize: 10,
-    total: 0
-  })
-  const [currentPage, setCurrentPage] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 10
-  })
+  const listUser = useAppSelector((state) => state.user.listUsers)
+  const meta = useAppSelector((state) => state.user.listUserMeta)
+  const listPaginate = useAppSelector((state) => state.user.listPaginate)
+  const isLoading = useAppSelector((state) => state.user.isLoading)
 
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
   const handleEdit = (userId: string) => {
-    dispatch(setOpenDrawerEdit(true))
+    dispatch(setOpenModalUpdate(true))
     dispatch(setUserId(userId))
   }
 
@@ -174,7 +157,7 @@ const CustomerPage = () => {
           <IconButton aria-label="edit" size='small' onClick={() => handleEdit(params.row?._id)}>
             <EditIcon fontSize='small' />
           </IconButton>
-          <DeleteCustomer />
+          <DeleteCustomer userId={params.row?._id} />
         </Stack>
       )
     }
@@ -183,24 +166,16 @@ const CustomerPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        setIsLoading(true)
-        const res = await fetchListUserAPI({ current: currentPage.page + 1, pageSize: currentPage.pageSize })
-        if (res?.data) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          setListUser(res.data?.result)
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          setMeta(res.data?.meta)
-        }
+        dispatch(setIsLoading(true))
+        dispatch(fetchListUsers({ current: listPaginate.page + 1, pageSize: listPaginate.pageSize }))
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('🚀 ~ error:', error)
       } finally {
-        setIsLoading(false)
+        dispatch(setIsLoading(false))
       }
     })()
-  }, [currentPage])
+  }, [dispatch, listPaginate.page, listPaginate.pageSize])
 
   return (
     <Card
@@ -222,8 +197,8 @@ const CustomerPage = () => {
         getRowClassName={(params) =>
           params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
         }
-        paginationModel={currentPage}
-        onPaginationModelChange={(model) => setCurrentPage(model)}
+        paginationModel={listPaginate}
+        onPaginationModelChange={(model) => dispatch(setListPaginate(model))}
         paginationMode="server"
         rowCount={meta.total}
         pageSizeOptions={[10, 20, 50]}
