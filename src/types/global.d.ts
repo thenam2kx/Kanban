@@ -9,13 +9,6 @@ declare global {
     data?: T
   }
 
-  interface IMeta {
-    current: number
-    pages: number
-    pageSize: number
-    total: number
-  }
-
   interface ISignin {
     username: string
     password: string
@@ -122,9 +115,21 @@ declare global {
   //   deletedAt?: Date;
   // }
 
+  interface IMeta {
+    current: number
+    pages: number
+    pageSize: number
+    total: number
+  }
+  interface IResponseList<T>{
+    result: T[]
+    meta: IMeta
+  }
+
   interface IRole {
     _id: string;
     name: string;
+    isActive: boolean;
     description: string;
     permissions: {
       _id: string;

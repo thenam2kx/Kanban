@@ -46,7 +46,6 @@ const renderRole = (roles: 'SUPER_ADMIN' | 'ADMIN' | 'PARTNER' | 'EMPLOYEE' | 'U
   default:
     return <Chip label={'USER'} color={'default'} size="small" />
   }
-
 }
 
 const CustomerPage = () => {
@@ -192,7 +191,7 @@ const CustomerPage = () => {
         rows={listUser}
         columns={columns}
         rowHeight={100}
-        getRowId={(row) => row._id}
+        getRowId={(row) => row?._id ? row?._id : ''}
         loading={listUser.length === 0 || isLoading}
         getRowClassName={(params) =>
           params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
@@ -200,7 +199,7 @@ const CustomerPage = () => {
         paginationModel={listPaginate}
         onPaginationModelChange={(model) => dispatch(setListPaginate(model))}
         paginationMode="server"
-        rowCount={meta.total}
+        rowCount={meta.total || 0}
         pageSizeOptions={[10, 20, 50]}
         disableColumnResize
         disableRowSelectionOnClick

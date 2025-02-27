@@ -15,11 +15,12 @@ import Switch from '@mui/material/Switch'
 import { useForm, SubmitHandler, Controller } from 'react-hook-form'
 import { FormHelperText } from '@mui/material'
 import { useEffect } from 'react'
-import { fetchInfoUserAPI, fetchListRoleAPI, updateUserAPI } from '@/apis/user.api'
+import { fetchInfoUserAPI, updateUserAPI } from '@/apis/user.api'
 import { setRoles } from '@/redux/slices/role.slice'
 import { toast } from 'react-toastify'
 import Modal from '@mui/material/Modal'
 import { useLocation } from 'react-router'
+import { fetchListRoleAPI } from '@/apis/role.api'
 
 interface IFormInput {
   fullname: string

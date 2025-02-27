@@ -15,11 +15,6 @@ export const fetchInfoUserAPI = async (customerId: string) => {
   return axios.get<IBackendResponse<IUser>>(url)
 }
 
-export const fetchListRoleAPI = async () => {
-  const url = '/api/v1/roles?current=1&pageSize=20&populate=permissions&fields=name,permissions.name,permissions.apiPath,permissions.method,permissions.module'
-  return axios.get<IBackendResponse<IRole>>(url)
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateUserAPI = async ({ userId, dataUpdate }: { userId: string, dataUpdate: any }) => {
   const url = `/api/v1/users/${userId}`
