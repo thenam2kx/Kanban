@@ -7,21 +7,21 @@ export const getAccountAPI = async () => {
 
 export const fetchListUserAPI = async ({ current, pageSize }: { current: number, pageSize: number }) => {
   const url = `/api/v1/users?current=${current}&pageSize=${pageSize}&populate=role&fields=name,role.name`
-  return axios.get<IBackendResponse<ICustomer[]>>(url)
+  return axios.get<IBackendResponse<IUser[]>>(url)
 }
 
 export const fetchInfoUserAPI = async (customerId: string) => {
   const url = `/api/v1/users/${customerId}`
-  return axios.get<IBackendResponse<ICustomer>>(url)
-}
-
-export const fetchListRoleAPI = async () => {
-  const url = '/api/v1/roles?current=1&pageSize=20&populate=permissions&fields=name,permissions.name,permissions.apiPath,permissions.method,permissions.module'
-  return axios.get<IBackendResponse<IRole>>(url)
+  return axios.get<IBackendResponse<IUser>>(url)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateUserAPI = async ({ userId, dataUpdate }: { userId: string, dataUpdate: any }) => {
   const url = `/api/v1/users/${userId}`
   return axios.patch<IBackendResponse<IUser>>(url, { ...dataUpdate })
+}
+
+export const deleteUserAPI = async (userId: string) => {
+  const url = `/api/v1/users/${userId}`
+  return axios.delete<IBackendResponse<IUser>>(url)
 }

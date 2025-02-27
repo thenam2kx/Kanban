@@ -110,6 +110,8 @@ const columns: GridColDef[] = [
 const rows: GridRowsProp = []
 for (let i = 0; i < 100; i++) {
   const status = faker.helpers.arrayElement(['Online', 'Offline'])
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   rows.push({
     id: faker.string.uuid(),
     customerName: faker.internet.username(),
