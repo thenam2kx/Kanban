@@ -17,56 +17,16 @@ import Tooltip from '@mui/material/Tooltip'
 import TextField from '@mui/material/TextField'
 import { useParams } from 'react-router'
 import { fetchRoleAPI } from '@/apis/role.api'
-
-
-const permissionGroups = [
-  {
-    name: 'User Management',
-    permissions: [
-      { id: 'user.view', name: 'View Users' },
-      { id: 'user.create', name: 'Create Users' },
-      { id: 'user.edit', name: 'Edit Users' },
-      { id: 'user.delete', name: 'Delete Users' },
-    ]
-  },
-  {
-    name: 'Content Management',
-    permissions: [
-      { id: 'content.view', name: 'View Content' },
-      { id: 'content.create', name: 'Create Content' },
-      { id: 'content.edit', name: 'Edit Content' },
-      { id: 'content.delete', name: 'Delete Content' },
-      { id: 'content.publish', name: 'Publish Content' },
-    ]
-  },
-  {
-    name: 'Settings',
-    permissions: [
-      { id: 'settings.view', name: 'View Settings' },
-      { id: 'settings.edit', name: 'Edit Settings' },
-    ]
-  }
-]
-
-
-const initialRole = {
-  id: 1,
-  name: 'Editor',
-  description: 'Can edit and manage content',
-  isActive: true,
-  permissions: ['user.view', 'content.view', 'content.create', 'content.edit']
-}
-
-interface IGroupPermissions {
-  name: string
-  permissions: IPermissions[]
-}
+import { fetchListPermissionsAPI } from '@/apis/permission.api'
+import { updateRoleAPI } from '@/apis/role.api'
+import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router'
 
 const UpdateRole = () => {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
-  const [listPermissions, setListPermissions] = useState<IPermissions[]>([])
-  const [groupPermissions, setGroupPermissions] = useState<IGroupPermissions[]>([])
+  const [permissionGroups, setPermissionGroups] = useState<IPermissionsGroup[]>([])
   const [role, setRole] = useState<IRole>({
     _id: '',
     name: '',
@@ -83,6 +43,7 @@ const UpdateRole = () => {
     setRole({ ...role, isActive: event.target.checked })
   }
 
+
   const handlePermissionToggle = (permissionId: string) => {
     setSelectedPermissions((prev) => {
       if (prev.includes(permissionId)) {
@@ -97,58 +58,54 @@ const UpdateRole = () => {
     const allSelected = groupPermissions.every((p) => selectedPermissions.includes(p))
 
     if (allSelected) {
-      setSelectedPermissions((prev) => prev.filter((_id) => !groupPermissions.includes(_id)))
+      setSelectedPermissions((prev) => prev.filter((id) => !groupPermissions.includes(id)))
     } else {
       const missingPermissions = groupPermissions.filter((p) => !selectedPermissions.includes(p))
       setSelectedPermissions((prev) => [...prev, ...missingPermissions])
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const updatedRole = {
-      ...role,
+      name: role.name,
+      description: role.description,
+      isActive: role.isActive,
       permissions: selectedPermissions
     }
-    console.log('Saving updated role:', updatedRole)
+    const res = await updateRoleAPI(id as string, updatedRole)
+    if (res && res.data) {
+      navigate('/roles')
+      toast.success('Cập nhật vai trò thành công')
+    } else {
+      toast.error('Cập nhật vai trò thất bại')
+    }
   }
 
   useEffect(() => {
     (async () => {
       const res = await fetchRoleAPI(id as string)
       if (res && res.data) {
-        setRole(res.data)
-        setListPermissions(res.data.permissions)
-        setSelectedPermissions(res.data?.permissions?.map((p) => p._id))
-
-        // Group permissions by module
-        const groupPermissions = res.data?.permissions?.reduce(
-          (acc: Record<string, string[]>, permission) => {
-            if (!acc[permission.module]) {
-              acc[permission.module] = []
-            }
-            acc[permission.module].push(permission)
-            return acc
-          },
-          {} as Record<string, string[]>
-        )
-
-        // Convert groupPermissions to array
-        const resultPermissions = Object.entries(groupPermissions).map(
-          ([key, value]) => ({
-            name: key,
-            permissions: value
-          })
-        )
-        setGroupPermissions(resultPermissions)
+        const { _id, name, description, isActive, permissions } = res.data
+        setRole({ _id, name, description, isActive, permissions })
+        setSelectedPermissions(res.data.permissions.map((p) => p._id))
       }
     })()
   }, [id])
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetchListPermissionsAPI()
+      if (res && res.data) {
+        setPermissionGroups(res.data.result)
+      }
+    })()
+  }, [])
 
   return (
     <Container maxWidth='lg' sx={{ margin: '0 auto', p: 2 }}>
       <Paper elevation={3} sx={{ mb: 3, p: 2 }}>
         <Typography variant='h4' gutterBottom>
-          Cập nhật vai trò: {'role.name'}
+          Cập nhật vai trò: <Typography variant='h5' component='span'>{role.name}</Typography>
         </Typography>
 
         <Divider sx={{ mb: 3 }} />
@@ -176,7 +133,7 @@ const UpdateRole = () => {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Typography variant='h5'>Permissions</Typography>
+          <Typography variant='h5'>Phân quyền</Typography>
           <Tooltip title='Manage what this role can access and modify'>
             <IconButton size='small' sx={{ ml: 1 }}>
               <InfoIcon fontSize='small' />
@@ -185,19 +142,19 @@ const UpdateRole = () => {
         </Box>
         <Divider sx={{ mb: 3 }} />
 
-        {groupPermissions.map((group) => (
-          <Card key={group.name} sx={{ mb: 3 }}>
+        {permissionGroups.map((group, index) => (
+          <Card key={`${group.name}-${index}`} sx={{ mb: 3 }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={group.permissions?.every((p) => selectedPermissions?.includes(p._id))}
+                      checked={group.permissions.every((p) => selectedPermissions.includes(p._id))}
                       indeterminate={
-                        group.permissions.some((p) => selectedPermissions?.includes(p._id)) &&
-                        !group.permissions.every((p) => selectedPermissions?.includes(p._id))
+                        group.permissions.some((p) => selectedPermissions.includes(p._id)) &&
+                        !group.permissions.every((p) => selectedPermissions.includes(p._id))
                       }
-                      onChange={() => handleGroupToggle(group.permissions?.map((p) => p._id))}
+                      onChange={() => handleGroupToggle(group.permissions.map((p) => p._id))}
                     />
                   }
                   label={<Typography variant='h6'>{group.name}</Typography>}
@@ -205,12 +162,12 @@ const UpdateRole = () => {
               </Box>
               <Divider sx={{ mb: 2 }} />
               <Grid container spacing={2}>
-                {group.permissions?.map((permission) => (
+                {group.permissions.map((permission) => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={permission._id}>
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={selectedPermissions?.includes(permission._id)}
+                          checked={selectedPermissions.includes(permission._id)}
                           onChange={() => handlePermissionToggle(permission._id)}
                           color='primary'
                         />

@@ -9,3 +9,8 @@ export const fetchRoleAPI = async (id: string) => {
   const url = `/api/v1/roles/${id}`
   return axios.get<IBackendResponse<IRole>>(url)
 }
+
+export const updateRoleAPI = async (id: string, data) => {
+  const url = `/api/v1/roles/${id}`
+  return axios.patch<IBackendResponse<IRole>>(url, { ...data })
+}

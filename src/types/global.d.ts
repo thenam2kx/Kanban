@@ -147,4 +147,9 @@ declare global {
     method: string;
     module: string;
   }
+
+  interface IPermissionsGroup {
+    name: string;
+    permissions: IPermissions[]
+  }
 }
