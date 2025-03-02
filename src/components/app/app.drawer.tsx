@@ -133,37 +133,6 @@ const AppDrawer = () => {
 
         <Divider />
 
-        <List>
-          {[
-            { text: 'Bảng điều khiển', icon: <DashboardIcon />, url: '/' },
-            { text: 'Khách hàng', icon: <PeopleIcon />, url: '/customers' },
-            { text: 'Đơn hàng', icon: <ShoppingCartIcon />, url: '/orders' },
-            { text: 'Tài khoản', icon: <ManageAccountsIcon />, url: '/account' }
-          ].map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => navigate(`${item.url}`)}
-                sx={{
-                  minHeight: 48,
-                  px: 2.5,
-                  justifyContent: stateDrawer ? 'initial' : 'center'
-                }}
-              >
-                <ListItemIcon sx={{
-                  minWidth: 0,
-                  justifyContent: 'center',
-                  mr: stateDrawer ? 3 : 'auto'
-                }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} sx={{ opacity: stateDrawer ? 1 : 0 }} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-
-        <Divider />
-
         <List sx={{ mb: 3 }}>
           <ListItem disablePadding sx={{ display: 'block' }}>
             <ListItemButton

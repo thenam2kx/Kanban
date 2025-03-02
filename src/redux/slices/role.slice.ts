@@ -4,8 +4,8 @@ import { AxiosError } from 'axios'
 
 interface IState {
   roles: IRole[]
-  isLoadingRole: boolean
   listRoles: IRole[]
+  isLoadingRole: boolean
   metaRole: IMeta
   currentPaginateRole: {
     page: number
@@ -76,6 +76,10 @@ const roleSlice = createSlice({
   }
 })
 
-export const { setRoles, setIsLoadingRole, setCurrentPaginateRole } = roleSlice.actions
+export const {
+  setRoles,
+  setIsLoadingRole,
+  setCurrentPaginateRole
+} = roleSlice.actions
 
 export default roleSlice.reducer

@@ -15,6 +15,7 @@ import PrivateRouter from './private.router'
 import { useAppSelector } from '@/redux/hooks'
 import DetailCustomer from '@/pages/customer/detail.customer/detail.customer'
 import RolePage from '@/pages/role/role.page'
+import UpdateRole from '@/pages/role/update.role'
 
 
 const Routers = () => {
@@ -30,6 +31,7 @@ const Routers = () => {
           <Route path='/customers/:id' element={<DetailCustomer />} />
           <Route path='/account' element={<AccountPage />} />
           <Route path='/roles' element={<RolePage />} />
+          <Route path='/roles/update/:id' element={<UpdateRole />} />
         </Route>
       </Route>
       <Route element={<PrivateRouter isAllowed={isAuthenticated ? false : true} redirectTo='/' />}>
