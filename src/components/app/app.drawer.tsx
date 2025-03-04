@@ -2,7 +2,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard'
 import PeopleIcon from '@mui/icons-material/People'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import LogoutIcon from '@mui/icons-material/Logout'
-import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import { styled, Theme, CSSObject } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import MuiDrawer from '@mui/material/Drawer'
@@ -108,37 +107,6 @@ const AppDrawer = () => {
             { text: 'Khách hàng', icon: <PeopleIcon />, url: '/customers' },
             { text: 'Đơn hàng', icon: <ShoppingCartIcon />, url: '/orders' },
             { text: 'Vai trò', icon: <AttributionIcon />, url: '/roles' }
-          ].map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => navigate(`${item.url}`)}
-                sx={{
-                  minHeight: 48,
-                  px: 2.5,
-                  justifyContent: stateDrawer ? 'initial' : 'center'
-                }}
-              >
-                <ListItemIcon sx={{
-                  minWidth: 0,
-                  justifyContent: 'center',
-                  mr: stateDrawer ? 3 : 'auto'
-                }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} sx={{ opacity: stateDrawer ? 1 : 0 }} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-
-        <Divider />
-
-        <List>
-          {[
-            { text: 'Bảng điều khiển', icon: <DashboardIcon />, url: '/' },
-            { text: 'Khách hàng', icon: <PeopleIcon />, url: '/customers' },
-            { text: 'Đơn hàng', icon: <ShoppingCartIcon />, url: '/orders' },
-            { text: 'Tài khoản', icon: <ManageAccountsIcon />, url: '/account' }
           ].map((item) => (
             <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton

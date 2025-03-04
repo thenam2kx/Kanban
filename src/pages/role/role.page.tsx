@@ -19,6 +19,7 @@ import { fetchListRoles, setCurrentPaginateRole } from '@/redux/slices/role.slic
 import DeleteIcon from '@mui/icons-material/Delete'
 import Button from '@mui/material/Button'
 import AddIcon from '@mui/icons-material/Add'
+import { useNavigate } from 'react-router'
 
 const RolePage = () => {
   const dispatch = useAppDispatch()
@@ -26,6 +27,7 @@ const RolePage = () => {
   const isLoadingRole = useAppSelector(state => state.role.isLoadingRole)
   const listRoles = useAppSelector(state => state.role.listRoles)
   const metaRole = useAppSelector(state => state.role.metaRole)
+  const navigate = useNavigate()
 
   const columns: GridColDef[] = [
     { field: '_id', headerName: 'ID', width: 90 },
@@ -66,7 +68,7 @@ const RolePage = () => {
           <IconButton aria-label="view" size='small'>
             <RemoveRedEyeIcon fontSize='small' />
           </IconButton>
-          <IconButton aria-label="edit" size='small'>
+          <IconButton aria-label="edit" size='small' onClick={() => navigate(`/roles/update/${params.row?._id}`)}>
             <EditIcon fontSize='small' />
           </IconButton>
           <IconButton aria-label="delete" size='small'>
@@ -126,67 +128,69 @@ const RolePage = () => {
   }, [currentPaginateRole, dispatch])
 
   return (
-    <Card
-      variant="outlined"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        flexGrow: 1,
-        maxHeight: 'calc(100vh - 120px)'
-      }}
-    >
-      <Stack spacing={2} direction="row" justifyContent={'end'} sx={{ p: 1 }}>
-        <Button variant="contained" startIcon={<AddIcon />}>Tạo mới</Button>
-      </Stack>
-      <DataGrid
-        rows={listRoles}
-        columns={columns}
-        rowHeight={100}
-        getRowId={(row) => row?._id ? row?._id : ''}
-        loading={listRoles.length === 0 || isLoadingRole}
-        getRowClassName={(params) =>
-          params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
-        }
-        paginationModel={currentPaginateRole}
-        onPaginationModelChange={(model) => dispatch(setCurrentPaginateRole(model))}
-        paginationMode="server"
-        rowCount={metaRole.total || 0}
-        pageSizeOptions={[10, 20, 50]}
-        disableColumnResize
-        disableRowSelectionOnClick
-        isCellEditable={() => false}
-        density="compact"
-        slots={{ pagination: CustomPagination }}
-        slotProps={{
-          filterPanel: {
-            filterFormProps: {
-              logicOperatorInputProps: {
-                variant: 'outlined',
-                size: 'small'
-              },
-              columnInputProps: {
-                variant: 'outlined',
-                size: 'small',
-                sx: { mt: 'auto' }
-              },
-              operatorInputProps: {
-                variant: 'outlined',
-                size: 'small',
-                sx: { mt: 'auto' }
-              },
-              valueInputProps: {
-                InputComponentProps: {
+    <>
+      <Card
+        variant="outlined"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          flexGrow: 1,
+          maxHeight: 'calc(100vh - 120px)'
+        }}
+      >
+        <Stack spacing={2} direction="row" justifyContent={'end'} sx={{ p: 1 }}>
+          <Button variant="contained" startIcon={<AddIcon />}>Tạo mới</Button>
+        </Stack>
+        <DataGrid
+          rows={listRoles}
+          columns={columns}
+          rowHeight={100}
+          getRowId={(row) => row?._id ? row?._id : ''}
+          loading={listRoles.length === 0 || isLoadingRole}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
+          paginationModel={currentPaginateRole}
+          onPaginationModelChange={(model) => dispatch(setCurrentPaginateRole(model))}
+          paginationMode="server"
+          rowCount={metaRole.total || 0}
+          pageSizeOptions={[10, 20, 50]}
+          disableColumnResize
+          disableRowSelectionOnClick
+          isCellEditable={() => false}
+          density="compact"
+          slots={{ pagination: CustomPagination }}
+          slotProps={{
+            filterPanel: {
+              filterFormProps: {
+                logicOperatorInputProps: {
                   variant: 'outlined',
                   size: 'small'
+                },
+                columnInputProps: {
+                  variant: 'outlined',
+                  size: 'small',
+                  sx: { mt: 'auto' }
+                },
+                operatorInputProps: {
+                  variant: 'outlined',
+                  size: 'small',
+                  sx: { mt: 'auto' }
+                },
+                valueInputProps: {
+                  InputComponentProps: {
+                    variant: 'outlined',
+                    size: 'small'
+                  }
                 }
               }
             }
-          }
-        }}
-        sx={{ flexGrow: 1, border: 'none' }}
-      />
-    </Card>
+          }}
+          sx={{ flexGrow: 1, border: 'none' }}
+        />
+      </Card>
+    </>
   )
 }
 
