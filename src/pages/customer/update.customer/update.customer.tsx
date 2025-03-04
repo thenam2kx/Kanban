@@ -120,7 +120,7 @@ const UpdateCustomer = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetchListRoleAPI()
+        const res = await fetchListRoleAPI({ current: 1, pageSize: 100 })
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         if (res.data && res.data?.result) {

@@ -96,6 +96,8 @@ const UpdateRole = () => {
     (async () => {
       const res = await fetchListPermissionsAPI()
       if (res && res.data) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         setPermissionGroups(res.data.result)
       }
     })()
