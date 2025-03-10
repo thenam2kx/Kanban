@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Save as SaveIcon, Cancel as CancelIcon, Info as InfoIcon } from '@mui/icons-material'
+import { Info as InfoIcon } from '@mui/icons-material'
 import Grid from '@mui/material/Grid2'
 import Container from '@mui/material/Container'
 import Box from '@mui/material/Box'
@@ -184,11 +184,11 @@ const UpdateRole = () => {
         ))}
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button variant='outlined' startIcon={<CancelIcon />} color='inherit'>
-            Cancel
+          <Button variant='outlined' color='inherit' onClick={() => navigate('/roles')}>
+            Hủy
           </Button>
-          <Button variant='contained' startIcon={<SaveIcon />} color='primary' onClick={handleSave}>
-            Save Changes
+          <Button variant='contained' color='primary' onClick={handleSave}>
+            Lưu thay đổi
           </Button>
         </Box>
       </Paper>

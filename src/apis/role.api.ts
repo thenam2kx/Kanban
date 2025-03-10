@@ -10,7 +10,17 @@ export const fetchRoleAPI = async (id: string) => {
   return axios.get<IBackendResponse<IRole>>(url)
 }
 
+export const createRoleAPI = async (data: { name: string; description: string; isActive: boolean; permissions: string[] }) => {
+  const url = '/api/v1/roles'
+  return axios.post<IBackendResponse<IRole>>(url, { ...data })
+}
+
 export const updateRoleAPI = async (id: string, data: { name: string; description: string; isActive: boolean; permissions: string[] }) => {
   const url = `/api/v1/roles/${id}`
   return axios.patch<IBackendResponse<IRole>>(url, { ...data })
+}
+
+export const deleteRoleAPI = async (roleId: string) => {
+  const url = `/api/v1/roles/${roleId}`
+  return axios.delete<IBackendResponse<IRole>>(url)
 }

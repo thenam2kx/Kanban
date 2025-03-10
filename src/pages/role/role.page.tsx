@@ -16,10 +16,13 @@ import Typography from '@mui/material/Typography'
 import Pagination from '@mui/material/Pagination'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { fetchListRoles, setCurrentPaginateRole } from '@/redux/slices/role.slice'
-import DeleteIcon from '@mui/icons-material/Delete'
 import Button from '@mui/material/Button'
 import AddIcon from '@mui/icons-material/Add'
 import { useNavigate } from 'react-router'
+import Paper from '@mui/material/Paper'
+import InputBase from '@mui/material/InputBase'
+import SearchIcon from '@mui/icons-material/Search'
+import DeleteRole from './delete.role'
 
 const RolePage = () => {
   const dispatch = useAppDispatch()
@@ -65,15 +68,13 @@ const RolePage = () => {
           justifyContent={'flex-end'}
           sx={{ height: '100%' }}
         >
-          <IconButton aria-label="view" size='small'>
+          <IconButton aria-label="view" size='small' onClick={() => navigate(`/roles/update/${params.row?._id}`)}>
             <RemoveRedEyeIcon fontSize='small' />
           </IconButton>
           <IconButton aria-label="edit" size='small' onClick={() => navigate(`/roles/update/${params.row?._id}`)}>
             <EditIcon fontSize='small' />
           </IconButton>
-          <IconButton aria-label="delete" size='small'>
-            <DeleteIcon fontSize='small' />
-          </IconButton>
+          <DeleteRole roleId={params.row?._id} />
         </Stack>
       )
     }
@@ -139,8 +140,33 @@ const RolePage = () => {
           maxHeight: 'calc(100vh - 120px)'
         }}
       >
-        <Stack spacing={2} direction="row" justifyContent={'end'} sx={{ p: 1 }}>
-          <Button variant="contained" startIcon={<AddIcon />}>Tạo mới</Button>
+        <Stack spacing={2} direction="row" justifyContent={'space-between'} sx={{ p: 1 }}>
+          <Paper
+            component="form"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              width: 400,
+              p: '1px 4px',
+              boxShadow: 'none'
+            }}
+          >
+            <InputBase
+              sx={{ ml: 1, flex: 1 }}
+              placeholder="Tìm kiếm..."
+              inputProps={{ 'aria-label': 'Tìm kiếm...' }}
+            />
+            <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+              <SearchIcon />
+            </IconButton>
+          </Paper>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/roles/create')}
+          >
+            Tạo mới
+          </Button>
         </Stack>
         <DataGrid
           rows={listRoles}
