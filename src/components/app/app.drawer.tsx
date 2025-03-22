@@ -18,6 +18,7 @@ import { Link as RouterLink } from 'react-router'
 import ModeThemeSelect from '@/themes/mode.theme'
 import { signout } from '@/redux/slices/auth.slice'
 import AttributionIcon from '@mui/icons-material/Attribution'
+import CategoryIcon from '@mui/icons-material/Category'
 
 const openedMixin = (theme: Theme): CSSObject => ({
   width: theme.kanban.appAside,
@@ -106,7 +107,8 @@ const AppDrawer = () => {
             { text: 'Bảng điều khiển', icon: <DashboardIcon />, url: '/' },
             { text: 'Khách hàng', icon: <PeopleIcon />, url: '/customers' },
             { text: 'Đơn hàng', icon: <ShoppingCartIcon />, url: '/orders' },
-            { text: 'Vai trò', icon: <AttributionIcon />, url: '/roles' }
+            { text: 'Vai trò', icon: <AttributionIcon />, url: '/roles' },
+            { text: 'Danh mục', icon: <CategoryIcon />, url: '/categories' }
           ].map((item) => (
             <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
               <ListItemButton
