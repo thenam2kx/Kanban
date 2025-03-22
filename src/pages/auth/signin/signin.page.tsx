@@ -130,6 +130,7 @@ const SigninPage = () => {
               id="email"
               type="email"
               name="email"
+              defaultValue={'admin@gmail.com'}
               placeholder="email@email.com"
               autoComplete="email"
               autoFocus
@@ -147,6 +148,7 @@ const SigninPage = () => {
               id="password"
               size='small'
               name="password"
+              defaultValue={'Admin@123'}
               autoFocus
               required
               fullWidth
