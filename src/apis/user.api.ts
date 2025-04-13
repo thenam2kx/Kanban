@@ -10,9 +10,15 @@ export const fetchListUserAPI = async ({ current, pageSize }: { current: number,
   return axios.get<IBackendResponse<IUser[]>>(url)
 }
 
-export const fetchInfoUserAPI = async (customerId: string) => {
-  const url = `/api/v1/users/${customerId}`
+export const fetchInfoUserAPI = async (userId: string) => {
+  const url = `/api/v1/users/${userId}`
   return axios.get<IBackendResponse<IUser>>(url)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createUserAPI = async (data: any) => {
+  const url = '/api/v1/users'
+  return axios.post<IBackendResponse<IUser>>(url, { ...data })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

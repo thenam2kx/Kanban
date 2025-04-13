@@ -11,14 +11,14 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['auth']
+  whitelist: ['auth', 'app']
 }
 
 const rootReducer = combineReducers({
   app: appReducer,
   auth: authReducer,
-  user: userReducer,
-  role: roleReducer
+  // user: userReducer,
+  // role: roleReducer
 })
 
 // Create persist reducer

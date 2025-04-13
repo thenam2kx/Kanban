@@ -17,6 +17,11 @@ export const signupAPI = async (data: ISignup) => {
   })
 }
 
+export const signoutAPI = async () => {
+  const url = '/api/v1/auth/signout'
+  return axios.post<IBackendResponse<ISigninResponse>>(url)
+}
+
 export const verifyAccountAPI = async (email: string, code: string) => {
   const url = '/api/v1/auth/verify-email'
   return axios.post<IBackendResponse<ISigninResponse>>(url, { email, code })

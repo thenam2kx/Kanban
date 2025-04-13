@@ -1,56 +1,26 @@
 import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import Grid from '@mui/material/Grid2'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
-import Divider from '@mui/material/Divider'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Switch from '@mui/material/Switch'
-import Paper from '@mui/material/Paper'
-import IconButton from '@mui/material/IconButton'
-import Save from '@mui/icons-material/Save'
-import CloudUpload from '@mui/icons-material/CloudUpload'
-import Delete from '@mui/icons-material/Delete'
-import { toast } from 'react-toastify'
+import { Button, Card, Form, Input, Switch, Upload, Space, message } from 'antd'
+import { UploadOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchInfoCategoryAPI, updateCategoryAPI } from '@/apis/category.apis'
 import { useNavigate, useParams } from 'react-router'
 
 const UpdateCategoryPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null)
-  // eslint-disable-next-line no-console
-  console.log('🚀 ~ CreateCategory ~ imageFile:', imageFile)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageError, setImageError] = useState<string | null>(null)
-  const navigate = useNavigate()
 
-  const { id } = useParams()
+  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const [form] = Form.useForm<ICategoryFormData>()
 
   const { data: infoCategory, isLoading } = useQuery({
     queryKey: ['category', id],
     queryFn: async () => {
       const result = await fetchInfoCategoryAPI(id!)
       return result.data
-    }
-  })
-
-  const {
-    control,
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset
-  } = useForm<ICategoryFormData>({
-    defaultValues: {
-      name: '',
-      description: '',
-      isPublished: true
-    }
+    },
+    enabled: !!id
   })
 
   // Clean up object URL when component unmounts or when image changes
@@ -62,225 +32,184 @@ const UpdateCategoryPage = () => {
     }
   }, [imagePreview])
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-
-    if (files && files.length > 0) {
-      const file = files[0]
-
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-      if (!validTypes.includes(file.type)) {
-        setImageError('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WEBP)')
-        return
-      }
-
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        setImageError('Kích thước ảnh không được vượt quá 2MB')
-        return
-      }
-
-      // Clear previous preview
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview)
-      }
-
-      // Create new preview
-      const previewUrl = URL.createObjectURL(file)
-      setImagePreview(previewUrl)
-      setImageFile(file)
-      setImageError(null)
+  // Populate form with category data
+  useEffect(() => {
+    if (infoCategory) {
+      form.setFieldsValue({
+        name: infoCategory.name,
+        description: infoCategory.description,
+        isPublished: infoCategory.isPublished,
+        image: infoCategory.image || ''
+      })
+      setImagePreview(infoCategory.image || null)
     }
+  }, [infoCategory, form])
+
+  const handleImageChange = (info: { file: File }) => {
+    const file = info.file
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      setImageError('Only JPEG, PNG, GIF, WEBP files are accepted')
+      return
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 / 1024) {
+      setImageError('Image size must not exceed 2MB')
+      return
+    }
+
+    // Clear previous preview
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
+
+    // Create new preview
+    const previewUrl = URL.createObjectURL(file)
+    setImagePreview(previewUrl)
+    setImageFile(file)
+    setImageError(null)
   }
 
   const handleRemoveImage = () => {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview)
     }
-
     setImagePreview(null)
     setImageFile(null)
+    form.setFieldsValue({ image: '' })
   }
 
   const updateCategoryMutation = useMutation({
     mutationFn: async (data: ICategoryFormData) => {
-      const result = await updateCategoryAPI({ name: data.name, description: data.description, isPublished: data.isPublished }, id!)
-      return result.data
-    },
-    onSuccess: () => {
-      toast.success('Cập nhật danh mục thành công')
-      reset()
-      // Clear image preview
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview)
-        setImagePreview(null)
-        setImageFile(null)
+      const updatedData = {
+        name: data.name,
+        description: data.description,
+        isPublished: data.isPublished,
+        image: imageFile ? imagePreview || '' : data.image || ''
       }
-      navigate('/categories')
+      const result = await updateCategoryAPI(updatedData, id!)
+      return result
+    },
+    onSuccess: (result) => {
+      if (result.data) {
+        message.success(result.message)
+        form.resetFields()
+        if (imagePreview) {
+          URL.revokeObjectURL(imagePreview)
+          setImagePreview(null)
+          setImageFile(null)
+        }
+        navigate('/categories')
+      } else {
+        message.error(`Error: ${result.message}`)
+      }
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Đã có lỗi xảy ra')
+      message.error(error?.response?.data?.message || 'An error occurred')
     }
   })
 
-  const onSubmit = (category: ICategoryFormData) => {
-    updateCategoryMutation.mutate(category)
+  const onFinish = (values: ICategoryFormData) => {
+    updateCategoryMutation.mutate(values)
   }
 
-  useEffect(() => {
-    if (infoCategory) {
-      reset(infoCategory)
-      setImagePreview(infoCategory.image || null)
-    }
-  }, [infoCategory, reset])
+  const onReset = () => {
+    form.resetFields()
+    handleRemoveImage()
+  }
 
   if (isLoading) {
-    return <Typography sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</Typography>
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
   return (
-    <Card>
-      <CardHeader title='Cập nhật danh mục' subheader='Nhập thông tin chi tiết của danh mục' />
-      <Divider />
-      <CardContent>
-        <Box component='form' onSubmit={handleSubmit(onSubmit)} noValidate>
-          <Grid container spacing={3}>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label='Tên danh mục'
-                required
-                error={!!errors.name}
-                helperText={errors.name?.message}
-                {...register('name', {
-                  required: 'Tên danh mục không được để trống'
-                })}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField fullWidth label='Mô tả' multiline rows={4} {...register('description')} />
-            </Grid>
+    <Card
+      title="Update Category"
+      extra={<span>Enter the details of the category</span>}
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        initialValues={{ name: '', description: '', isPublished: true, image: '' }}
+      >
+        <Form.Item
+          label="Category Name"
+          name="name"
+          rules={[{ required: true, message: 'Category name is required' }]}
+        >
+          <Input placeholder="Enter category name" />
+        </Form.Item>
 
-            {/* Image Upload Section */}
-            <Grid size={12}>
-              <Typography variant='subtitle1' gutterBottom>
-                Hình ảnh
-              </Typography>
-              <Box sx={{ mt: 1 }}>
-                {imagePreview ? (
-                  <Box sx={{ position: 'relative', width: 'fit-content' }}>
-                    <Paper
-                      elevation={2}
-                      sx={{
-                        p: 1,
-                        borderRadius: 1,
-                        position: 'relative'
-                      }}
-                    >
-                      <img
-                        src={imagePreview || '/placeholder.svg'}
-                        alt='Category preview'
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '200px',
-                          display: 'block',
-                          borderRadius: '4px'
-                        }}
-                      />
-                      <IconButton
-                        size='small'
-                        sx={{
-                          position: 'absolute',
-                          top: -10,
-                          right: -10,
-                          bgcolor: 'error.main',
-                          color: 'white',
-                          '&:hover': {
-                            bgcolor: 'error.dark'
-                          }
-                        }}
-                        onClick={handleRemoveImage}
-                      >
-                        <Delete fontSize='small' />
-                      </IconButton>
-                    </Paper>
-                  </Box>
-                ) : (
-                  <Box
-                    sx={{
-                      border: '2px dashed',
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      p: 3,
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'action.hover'
-                      }
-                    }}
-                    onClick={() => {
-                      const input = document.getElementById('category-image-upload')
-                      if (input) input.click()
-                    }}
-                  >
-                    <input
-                      id='category-image-upload'
-                      type='file'
-                      name='image'
-                      accept='image/jpeg, image/png, image/gif, image/webp'
-                      onChange={handleImageChange}
-                      style={{ display: 'none' }}
-                    />
-                    <CloudUpload color='primary' sx={{ fontSize: 40, mb: 1 }} />
-                    <Typography variant='body1' gutterBottom>
-                      Kéo thả hoặc nhấp để tải lên hình ảnh
-                    </Typography>
-                    <Typography variant='caption' color='textSecondary'>
-                      Hỗ trợ JPEG, PNG, GIF, WEBP. Tối đa 2MB.
-                    </Typography>
-                    {imageError && (
-                      <Typography color='error' variant='caption' sx={{ display: 'block', mt: 1 }}>
-                        {imageError}
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-              </Box>
-            </Grid>
+        <Form.Item label="Description" name="description">
+          <Input.TextArea rows={4} placeholder="Enter description" />
+        </Form.Item>
 
-            <Grid size={12}>
-              <Controller
-                name='isPublished'
-                control={control}
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={<Switch checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />}
-                    label='Kích hoạt'
-                  />
-                )}
+        <Form.Item label="Image" name="image">
+          {imagePreview ? (
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Category preview"
+                className="max-w-full max-h-48 rounded"
               />
-            </Grid>
-          </Grid>
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant='outlined'
-              sx={{ mr: 2 }}
-              onClick={() => {
-                reset()
-                handleRemoveImage()
+              <Button
+                icon={<DeleteOutlined />}
+                danger
+                onClick={handleRemoveImage}
+                className="absolute top-0 right-0"
+              />
+            </div>
+          ) : (
+            <Upload
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              showUploadList={false}
+              customRequest={({ file }) => handleImageChange({ file: file as File })}
+              beforeUpload={(file) => {
+                const isValidType = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)
+                const isLt2M = file.size / 1024 / 1024 < 2
+                if (!isValidType) message.error('Only JPEG, PNG, GIF, WEBP files are accepted')
+                if (!isLt2M) message.error('Image must be smaller than 2MB')
+                return isValidType && isLt2M
               }}
             >
-              Hủy
+              <div className="border-2 border-dashed border-gray-300 rounded p-6 text-center hover:border-blue-500 hover:bg-gray-50 cursor-pointer">
+                <UploadOutlined className="text-3xl text-blue-500" />
+                <p className="mt-2">Drag and drop or click to upload image</p>
+                <p className="text-gray-500 text-sm">Supports JPEG, PNG, GIF, WEBP. Max 2MB.</p>
+                {imageError && <p className="text-red-500 text-sm mt-1">{imageError}</p>}
+              </div>
+            </Upload>
+          )}
+        </Form.Item>
+
+        <Form.Item label="Active" name="isPublished" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+
+        <Form.Item>
+          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+            <Button
+              onClick={onReset}
+              disabled={updateCategoryMutation.isPending}
+            >
+              Cancel
             </Button>
-            <Button type='submit' variant='contained' startIcon={<Save />}>
-              Lưu
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={updateCategoryMutation.isPending}
+              icon={<UploadOutlined />}
+            >
+              Save
             </Button>
-          </Box>
-        </Box>
-      </CardContent>
+          </Space>
+        </Form.Item>
+      </Form>
     </Card>
   )
 }

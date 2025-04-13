@@ -1,23 +1,33 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 interface IState {
-  isOpenDrawer: boolean
+  isOpenSidebar: boolean
+  isDarkMode: boolean
+  themeMode: string
 }
 
 const initialState: IState = {
-  isOpenDrawer: true
+  isOpenSidebar: true,
+  isDarkMode: false,
+  themeMode: 'light'
 }
 
 const appSlice = createSlice({
   name: 'app',
   initialState,
   reducers: {
-    setStateDrawer: (state) => {
-      state.isOpenDrawer = !state.isOpenDrawer
+    setStateSidebar: (state) => {
+      state.isOpenSidebar = !state.isOpenSidebar
+    },
+    setIsDarkMode: (state) => {
+      state.isDarkMode = !state.isDarkMode
+    },
+    setStateThemeMode: (state, payload) => {
+      state.themeMode = payload.payload
     }
   }
 })
 
-export const { setStateDrawer } = appSlice.actions
+export const { setStateSidebar, setIsDarkMode, setStateThemeMode } = appSlice.actions
 
 export default appSlice.reducer

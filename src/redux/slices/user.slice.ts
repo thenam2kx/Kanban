@@ -1,5 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { fetchInfoUserAPI, fetchListUserAPI } from '@/apis/user.api'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 interface IState {
   openModalUpdate: boolean
@@ -19,12 +18,6 @@ interface IState {
   }
 }
 
-interface IUserListResponse {
-  result: IUser[];
-  meta: IMeta;
-}
-
-
 const initialState: IState = {
   openModalUpdate: false,
   userId: '',
@@ -43,34 +36,6 @@ const initialState: IState = {
   }
 }
 
-export const fetchListUsers = createAsyncThunk<IUserListResponse, { current: number, pageSize: number }>(
-  'user/fetchListUsers',
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  async (params: { current: number, pageSize: number }) => {
-    try {
-      const response = await fetchListUserAPI(params)
-      return response.data
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log('🚀 ~ fetchListUsers ~ error:', error)
-    }
-  }
-)
-
-export const fetchDetailUser = createAsyncThunk(
-  'user/fetchDetailUser',
-  async (params: { userId: string }) => {
-    try {
-      const response = await fetchInfoUserAPI(params.userId)
-      return response.data
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log('🚀 ~ fetchListUsers ~ error:', error)
-    }
-  }
-)
-
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -87,20 +52,6 @@ const userSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload
     }
-  },
-  extraReducers: (builder) => {
-    builder.addCase(fetchListUsers.fulfilled, (state, action: { payload: IUserListResponse }) => {
-      state.listUsers = action?.payload?.result || []
-      state.listUserMeta = {
-        current: action?.payload?.meta?.current || 1,
-        pages: action?.payload?.meta?.pages || 0,
-        pageSize: action?.payload?.meta?.pageSize || 10,
-        total: action?.payload?.meta?.total || 0
-      }
-    })
-    builder.addCase(fetchDetailUser.fulfilled, (state, action) => {
-      state.detailUser = action?.payload || null
-    })
   }
 })
 
