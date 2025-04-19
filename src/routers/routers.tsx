@@ -15,6 +15,7 @@ import BlogsPage from '@/pages/blogs/blogs.page'
 import CreateBlog from '@/pages/blogs/create.blog'
 import UpdateBlogPage from '@/pages/blogs/update.blog.page'
 import ViewBlogPage from '@/pages/blogs/view.blog.page'
+import DashboardPage from '@/pages/dashboard/dashboard.page'
 
 
 const Routers = () => {
@@ -24,6 +25,7 @@ const Routers = () => {
     <Routes>
       <Route element={<PrivateRouter isAllowed={isAuthenticated ? true : false} redirectTo='/signin' />}>
         <Route path='/' element={<LayoutPage />}>
+          <Route index element={<DashboardPage />} />
           <Route path='/users' element={<UserPage />} />
           <Route path='/users/create' element={<CreateUserPage />} />
           <Route path='/users/update/:id' element={<UpdateUserPage />} />

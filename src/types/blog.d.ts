@@ -7,6 +7,7 @@ declare global {
     content: string
     excerpt: string
     tags: string[]
+    categories: string[];
     isPublic: boolean
     coverImage?: string
   }
@@ -18,6 +19,10 @@ declare global {
     content: string
     excerpt: string
     tags: {
+      _id: string
+      name: string
+    }[]
+    categories: {
       _id: string
       name: string
     }[]

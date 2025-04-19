@@ -23,6 +23,7 @@ const CreateBlog = () => {
   })
 
   const handleSubmit = async (values: IBlogFormData) => {
+    console.log('🚀 ~ handleSubmit ~ values:', values)
     handleCreateBlogs.mutate(values)
   }
 

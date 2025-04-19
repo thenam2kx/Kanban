@@ -1,13 +1,16 @@
 import { useRef, useState } from 'react'
-import { Button, Form, Input, Select, Upload, message, Spin, Switch, Image } from 'antd'
-import { UploadOutlined, SaveOutlined, PictureOutlined } from '@ant-design/icons'
+import { Button, Form, Input, Upload, message, Spin, Switch, Image, Row, Col, Collapse, Typography, Checkbox, Space } from 'antd'
+import { UploadOutlined, FormOutlined, EyeOutlined, CalendarOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons'
 import type { UploadFile, UploadProps } from 'antd'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchListTagsAPI } from '@/apis/tags.api'
 import { uploadImageCloudinaryAPI } from '@/apis/apis'
+import { fetchListCategoriesBlogAPI } from '@/apis/category.blog.apis'
 
+const { Panel } = Collapse
+const { Text } = Typography
 
 interface IProps {
   initialValues?: IBlogFormData
@@ -77,6 +80,18 @@ const FormBlog = (props: IProps) => {
     }
   })
 
+  const { data: listCategories } = useQuery({
+    queryKey: ['fetch-list-categories'],
+    queryFn: async () => {
+      const res = await fetchListCategoriesBlogAPI()
+      if (res.data) {
+        return res.data.result
+      } else {
+        throw new Error('Failed to fetch categories')
+      }
+    }
+  })
+
   // Handle image upload to Cloudinary
   const uploadMutation = useMutation({
     mutationFn: async (file: UploadFile) => {
@@ -116,10 +131,13 @@ const FormBlog = (props: IProps) => {
     listType: 'picture'
   }
 
-  const tagOptions = listTags?.map((tag) => ({
-    value: tag._id,
-    label: tag.name
-  }))
+  const expandIcon = ({ isActive }: { isActive?: boolean }) => {
+    return isActive ? <CaretUpOutlined /> : <CaretDownOutlined />
+  }
+
+  const onPreview = () => {
+    message.info('This feature is not implemented yet')
+  }
 
   return (
     <div>
@@ -134,106 +152,186 @@ const FormBlog = (props: IProps) => {
             excerpt: initialValues?.excerpt || '',
             isPublic: initialValues?.isPublic || true,
             coverImage: initialValues?.coverImage || '',
-            tags: []
+            tags: initialValues?.tags || [],
+            categories: initialValues?.categories || []
           }}
           className='space-y-4'
         >
-          <Form.Item name='title' label='Tiêu đề' rules={[{ required: true, message: 'Please enter a title' }]}>
-            <Input placeholder='Enter blog post title' className='py-2' />
-          </Form.Item>
+          <Row gutter={16}>
+            {/* Left Column */}
+            <Col span={18}>
+              <Form.Item name='title' label='Tiêu đề' rules={[{ required: true, message: 'Tiêu đề không được để trống!' }]}>
+                <Input placeholder='Nhập tiêu đề' className='py-2' />
+              </Form.Item>
+              <Form.Item name='excerpt' label='Mô tả ngắn' rules={[{ required: true, message: 'Mô tả ngắn không được để trống!' }]}>
+                <Input placeholder='Nhập mô tả ngắn' className='py-2' />
+              </Form.Item>
 
-          <Form.Item name='excerpt' label='Mô tả ngắn' rules={[{ required: true, message: 'Please enter an excerpt' }]}>
-            <Input placeholder='A short summary of your post' className='py-2' />
-          </Form.Item>
-
-          <Form.Item name='content' label='Nội dung' rules={[{ required: true, message: 'Please enter content' }]}>
-            <ReactQuill
-              ref={quillRef}
-              theme="snow"
-              value={content}
-              onChange={setContent}
-              modules={modules}
-              formats={formats}
-              className="h-80 mb-12"
-            />
-          </Form.Item>
-
-          <Form.Item name='tags' label='Tags' rules={[{ required: true, message: 'Please select at least one tag' }]}>
-            <Select mode='multiple' placeholder='Select tags' options={tagOptions} className='w-full' />
-          </Form.Item>
-
-          <Form.Item name='coverImage' label='Hình ảnh'>
-            <Upload {...uploadProps} onChange={() => handleUploadImage(fileList[0])}>
-              <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
-            </Upload>
-            {
-              initialValues?.coverImage && (
-                <Image
-                  width={200}
-                  src={initialValues?.coverImage}
+              <Form.Item name='content' label='Nội dung' rules={[{ required: true, message: 'Nội dung không được để trống!' }]}>
+                <ReactQuill
+                  ref={quillRef}
+                  theme='snow'
+                  value={content}
+                  onChange={setContent}
+                  modules={modules}
+                  formats={formats}
+                  className='h-80 mb-12'
                 />
-              )
-            }
-          </Form.Item>
+              </Form.Item>
+            </Col>
 
-          <Form.Item label="Public" name="isPublic" valuePropName="checked">
-            <Switch defaultChecked />
-          </Form.Item>
+            {/* Right Column */}
+            <Col span={6}>
+              <div className='w-full max-w-md border border-gray-200 rounded-md bg-white'>
+                <Collapse defaultActiveKey={['1', '2', '4']} expandIcon={expandIcon} className='border-0'>
+                  <Panel
+                    header={
+                      <div className='flex justify-between items-center w-full'>
+                        <span className='font-medium text-base'>Xuất bản</span>
+                      </div>
+                    }
+                    key='1'
+                    className='border-0 border-b border-gray-200'
+                  >
 
-          <div className='flex justify-between pt-4 border-t border-gray-100'>
-            <Button type='default' className='bg-gray-100'>
-              Lưu bản nháp
-            </Button>
-            <Button type='primary' htmlType='submit' icon={<SaveOutlined />} loading={isLoading} className='bg-blue-600 hover:bg-blue-700'>
-              Đăng bài
-            </Button>
-          </div>
+                    <div className='mb-3'>
+                      <div className='flex items-center mb-1'>
+                        <FormOutlined className='mr-2 text-gray-500' />
+                        <Form.Item label='Public' name='isPublic' valuePropName='checked' hidden>
+                          <Switch defaultChecked />
+                        </Form.Item>
+                        <Text className='text-gray-600'>Trạng thái: </Text>
+                        <Text strong className='ml-1'>
+                          Draft
+                        </Text>
+                        <Button type='link' className='p-0 ml-2 text-blue-500'>
+                          Sửa
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center mb-1'>
+                        <EyeOutlined className='mr-2 text-gray-500' />
+                        <Text className='text-gray-600'>Hiển thị: </Text>
+                        <Text strong className='ml-1'>
+                          Công khai
+                        </Text>
+                        <Button type='link' className='p-0 ml-2 text-blue-500'>
+                          Sửa
+                        </Button>
+                      </div>
+
+                      <div className='flex items-center mb-1'>
+                        <CalendarOutlined className='mr-2 text-gray-500' />
+                        <Text className='text-gray-600'>Xuất bản </Text>
+                        <Text strong className='ml-1'>
+                          Hiện tại
+                        </Text>
+                        <Button type='link' className='p-0 ml-2 text-blue-500'>
+                          Sửa
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className='flex justify-end gap-3'>
+                      <Button
+                        onClick={onPreview}
+                        className='border border-blue-500 text-blue-500 hover:text-blue-600 hover:border-blue-600'
+                      >
+                        Xem trước
+                      </Button>
+
+
+                      <Button type='default' className='bg-gray-100'>
+                        Lưu nháp
+                      </Button>
+                      <Button type='primary' htmlType='submit' loading={isLoading} className='bg-blue-600 hover:bg-blue-700'>
+                        {initialValues ? 'Lưu' : 'Xuất bản'}
+                      </Button>
+                    </div>
+                  </Panel>
+
+                  <Panel
+                    header={
+                      <div className='flex justify-between items-center w-full'>
+                        <span className='font-medium text-base'>Danh mục</span>
+                      </div>
+                    }
+                    key='2'
+                    className='border-0 border-b border-gray-200'
+                  >
+                    <div className='mb-3'>
+                      <Checkbox.Group className='w-full'>
+                        <Space direction='vertical' className='w-full'>
+                          {
+                            listCategories && listCategories?.map((category) => (
+                              <Checkbox value={category._id} key={category._id}>{category.name}</Checkbox>
+                            ))
+                          }
+                        </Space>
+                      </Checkbox.Group>
+
+                      <Button type='link' className='p-0 mt-2 text-blue-500 flex items-center'>
+                        <span className='mr-1'>+</span> Add Category
+                      </Button>
+                    </div>
+                  </Panel>
+
+                  <Panel
+                    header={
+                      <div className='flex justify-between items-center w-full'>
+                        <span className='font-medium text-lg'>Tags</span>
+                      </div>
+                    }
+                    key='3'
+                    className='border-0'
+                  >
+                    <Form.Item name='tags' rules={[{ required: true, message: 'Tag không được để trống!' }]}>
+                      <Checkbox.Group className='w-full'>
+                        <Space direction='vertical' className='w-full'>
+                          {
+                            listTags && listTags?.map((tag) => (
+                              <Checkbox value={tag._id} key={tag._id}>{tag.name}</Checkbox>
+                            ))
+                          }
+                        </Space>
+                      </Checkbox.Group>
+                    </Form.Item>
+                    <Button type='link' className='p-0 mt-2 text-blue-500 flex items-center'>
+                      <span className='mr-1'>+</span> Add Tags
+                    </Button>
+                  </Panel>
+
+                  <Panel
+                    header={
+                      <div className='flex justify-between items-center w-full'>
+                        <span className='font-medium text-base'>Ảnh đại diện</span>
+                      </div>
+                    }
+                    key='4'
+                    className='border-0'
+                  >
+                    <div className='flex w-full'>
+                      <Form.Item name='coverImage' label='Hình ảnh' className='w-full'>
+                        <Upload {...uploadProps} onChange={() => handleUploadImage(fileList[0])} className='w-full'>
+                          <Button icon={<UploadOutlined />} >Chọn ảnh</Button>
+                        </Upload>
+                        {
+                          initialValues?.coverImage && (
+                            <Image
+                              width={200}
+                              src={initialValues?.coverImage}
+                            />
+                          )
+                        }
+                      </Form.Item>
+                    </div>
+                  </Panel>
+                </Collapse>
+              </div>
+            </Col>
+          </Row>
         </Form>
       </Spin>
-
-
-      <div className='mt-8 bg-white rounded-lg shadow-md p-6'>
-        <div className='mb-4'>
-          <h2 className='text-xl font-bold text-gray-800'>Preview</h2>
-          <p className='text-gray-500'>See how your post will look</p>
-        </div>
-
-        <div className='border border-gray-200 rounded-lg p-4 min-h-[200px] flex items-center justify-center'>
-          {form.getFieldValue('title') ? (
-            <div className='w-full'>
-              <h3 className='text-xl font-bold'>{form.getFieldValue('title')}</h3>
-              {fileList.length > 0 ? (
-                <div className='my-4 h-48 bg-gray-200 rounded flex items-center justify-center'>
-                  <img
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    src={URL.createObjectURL(fileList[0] as any) || '/placeholder.svg'}
-                    alt='Preview'
-                    className='max-h-full object-contain'
-                  />
-                </div>
-              ) : (
-                <div className='my-4 h-48 bg-gray-200 rounded flex items-center justify-center'>
-                  <PictureOutlined className='text-4xl text-gray-400' />
-                </div>
-              )}
-              <p className='text-gray-600 mb-2'>{form.getFieldValue('excerpt')}</p>
-              <p className='text-gray-800 whitespace-pre-line'>
-                {form.getFieldValue('content')?.substring(0, 200)}
-                {form.getFieldValue('content')?.length > 200 ? '...' : ''}
-              </p>
-              <div className='mt-4 flex flex-wrap gap-2'>
-                {form.getFieldValue('tags')?.map((tag: string) => (
-                  <span key={tag} className='px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded'>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className='text-gray-400'>Fill in the form to see a preview</p>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
