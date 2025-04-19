@@ -10,20 +10,19 @@ const LayoutPage = () => {
   const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken()
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout hasSider>
       <AppSidebar />
-      <Layout>
+      <Layout style={{ overflow: 'auto', position: 'relative' }}>
         <AppHeader />
-        <Content
-          style={{
-            margin: '24px 16px',
+        <Content style={{ margin: '16px' }}>
+          <div className="" style={{
             padding: 24,
-            minHeight: 280,
+            height: '100%',
             background: colorBgContainer,
             borderRadius: borderRadiusLG
-          }}
-        >
-          <Outlet />
+          }}>
+            <Outlet />
+          </div>
         </Content>
         <AppFooter />
       </Layout>

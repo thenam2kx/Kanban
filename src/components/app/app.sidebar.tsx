@@ -28,7 +28,7 @@ const items: MenuProps['items'] = [
       {
         key: '/users',
         icon: <UserOutlined />,
-        label: <Link to={'/users'} style={{ color: 'inherit' }}>Người dùng</Link>,
+        label: <Link to={'/users'} style={{ color: 'inherit' }}>Người dùng</Link>
       },
       {
         key: '/categories',
@@ -39,6 +39,11 @@ const items: MenuProps['items'] = [
         key: '/products',
         icon: <ProductOutlined />,
         label: <Link to={'/products'}>Sản phẩm</Link>
+      },
+      {
+        key: '/blogs',
+        icon: <ProductOutlined />,
+        label: <Link to={'/blogs'}>Blog</Link>
       }
     ]
   }
@@ -81,7 +86,18 @@ const AppSidebar = () => {
       collapsible
       collapsed={!isOpenDrawer}
       width={250}
-      style={{ overflow: 'auto', height: '100vh', background: currentTheme === 'light' ? 'white' : '' }}
+      style={{
+        overflow: 'auto',
+        height: '100vh',
+        position: 'sticky',
+        insetInlineStart: 0,
+        top: 0,
+        bottom: 0,
+        scrollbarWidth: 'thin',
+        scrollbarGutter: 'stable',
+        background: currentTheme === 'light' ? 'white' : ''
+      }}
+      // style={{ overflow: 'auto', height: '100vh', background: currentTheme === 'light' ? 'white' : '' }}
     >
       <div style={{
         display: 'flex',

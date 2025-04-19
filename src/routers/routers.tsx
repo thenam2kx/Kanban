@@ -11,6 +11,10 @@ import UpdateUserPage from '@/pages/user/update.user.page'
 import CategoryPage from '@/pages/category/category.page'
 import CreateCategory from '@/pages/category/create.category'
 import UpdateCategoryPage from '@/pages/category/update.category'
+import BlogsPage from '@/pages/blogs/blogs.page'
+import CreateBlog from '@/pages/blogs/create.blog'
+import UpdateBlogPage from '@/pages/blogs/update.blog.page'
+import ViewBlogPage from '@/pages/blogs/view.blog.page'
 
 
 const Routers = () => {
@@ -26,6 +30,10 @@ const Routers = () => {
           <Route path='/categories' element={<CategoryPage />} />
           <Route path='/categories/create' element={<CreateCategory />} />
           <Route path='/categories/update/:id' element={<UpdateCategoryPage />} />
+          <Route path='/blogs' element={<BlogsPage />} />
+          <Route path='/blogs/create' element={<CreateBlog />} />
+          <Route path='/blogs/update/:id' element={<UpdateBlogPage />} />
+          <Route path='/blogs/view/:id' element={<ViewBlogPage />} />
           {/* <Route index element={<DashboardPage />} />
           <Route path='/orders' element={<OrderPage />} />
           <Route path='/customers' element={<CustomerPage />} />
