@@ -43,7 +43,12 @@ const items: MenuProps['items'] = [
       {
         key: '/blogs',
         icon: <ProductOutlined />,
-        label: <Link to={'/blogs'}>Blog</Link>
+        label: <Link to={'/blogs'}>Bài viết</Link>
+      },
+      {
+        key: '/blogs-category',
+        icon: <ProductOutlined />,
+        label: <Link to={'/blogs-category'}>Danh mục bài viết</Link>
       }
     ]
   }

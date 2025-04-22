@@ -28,7 +28,7 @@ interface BlogPost {
   readTime: string
 }
 
-const mockBlogPosts: BlogPost[] = [
+export const mockBlogPosts: BlogPost[] = [
   {
     id: '1',
     title: 'Getting Started with React and TypeScript',

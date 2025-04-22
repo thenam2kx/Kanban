@@ -1,28 +1,114 @@
-import { Table, Button, Tag, Space, Typography, Tooltip, message, Popconfirm } from 'antd'
+import { Table, Button, Tag, Space, Typography, Tooltip, message, Popconfirm, Input, Select } from 'antd'
 import {
   EditOutlined,
   DeleteOutlined,
   EyeOutlined,
-  PlusOutlined
+  PlusOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  ReloadOutlined,
+  ExportOutlined
 } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import { Link } from 'react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deleteBlogAPI, fetchListBlogAPI } from '@/apis/blog.api'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { fetchListTagsAPI } from '@/apis/tags.api'
+import { fetchListCategoriesBlogAPI } from '@/apis/category.blog.apis'
+import debounce from 'debounce'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+
+const { Search } = Input
+const { Option } = Select
+
+
+interface IPagination {
+  current: number
+  pageSize: number
+  total: number
+}
+
+export interface IParamsSearch {
+  search: string
+  tags: string[]
+  categories: string[]
+  status: boolean | null
+}
+
 
 const BlogsPage = () => {
+  const [searchValue, setSearchValue] = useState<string>('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedStatus, setSelectedStatus] = useState<boolean | null>(null)
+  const [pagination, setPagination] = useState<IPagination>({
+    current: 1,
+    pageSize: 5,
+    total: 20
+  })
+
   const queryClient = useQueryClient()
   // Fetching blog posts
-  const { data: listBlogs, isLoading } = useQuery({
-    queryKey: ['fetch-list-blogs'],
+  const { data: listBlogs, isLoading, isPlaceholderData } = useQuery({
+    queryKey: [
+      'fetch-list-blogs',
+      pagination.current,
+      pagination.pageSize,
+      searchValue,
+      selectedTags,
+      selectedCategories,
+      selectedStatus
+    ],
     queryFn: async () => {
-      const res = await fetchListBlogAPI()
+      const paramsSearch: IParamsSearch = {
+        search: searchValue,
+        tags: selectedTags,
+        categories: selectedCategories,
+        status: selectedStatus
+      }
+      const res = await fetchListBlogAPI({ current: pagination.current, pageSize: pagination.pageSize, paramsSearch })
       if (res.data) {
+        setPagination({
+          current: res?.data.meta.current,
+          pageSize: res.data.meta.pageSize,
+          total: res.data.meta.total
+        })
         return res.data.result
       } else {
         throw new Error('Failed to fetch blogs')
       }
-    }
+    },
+    placeholderData: keepPreviousData
+  })
+
+  // Fetching list tags
+  const { data: listTags } = useQuery({
+    queryKey: ['fetch-list-tags'],
+    queryFn: async () => {
+      const res = await fetchListTagsAPI()
+      if (res.data) {
+        return res.data.result
+      } else {
+        throw new Error('Có lỗi xảy ra khi lấy danh sách tags')
+      }
+    },
+    placeholderData: keepPreviousData
+  })
+
+  // Fetching list categories
+  const { data: listCategories } = useQuery({
+    queryKey: ['fetch-list-categories'],
+    queryFn: async () => {
+      const res = await fetchListCategoriesBlogAPI()
+      if (res.data) {
+        return res.data.result
+      } else {
+        throw new Error('Có lỗi xảy ra khi lấy danh sách danh mục')
+      }
+    },
+    placeholderData: keepPreviousData
   })
 
   const handleDeleteBlogs = useMutation({
@@ -43,14 +129,90 @@ const BlogsPage = () => {
     }
   })
 
-  const confirmDelete = (id: string) => {
+  const confirmDelete = useCallback((id: string) => {
     handleDeleteBlogs.mutate(id)
+  }, [handleDeleteBlogs])
+
+  const handleTableChange = (
+    pagination: TablePaginationConfig
+    // filters: Record<string, FilterValue | null>,
+    // sorter: SorterResult<IBlog> | SorterResult<IBlog>[],
+    // extra: TableCurrentDataSource<IBlog>
+  ) => {
+    setPagination({
+      current: pagination.current || 1,
+      pageSize: pagination.pageSize || 10,
+      total: pagination.total || 0
+    })
   }
 
-  // Table columns
-  const columns: ColumnsType<IBlog> = [
+  const exportToExcel = (data: IBlog[], fileName: string) => {
+    const exportData = data.map(blog => ({
+      ID: blog._id,
+      Title: blog.title,
+      Excerpt: blog.excerpt,
+      Author: blog.author.fullname,
+      Status: blog.isPublic ? 'Công khai' : 'Riêng tư',
+      'Created At': new Date(blog.createdAt).toLocaleDateString(),
+      Tags: blog.tags.map(tag => tag.name).join(', '),
+      Categories: blog?.categories?.map(cat => cat.name).join(', '),
+      Views: blog.views
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Blogs')
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' })
+    saveAs(blob, `${fileName}.xlsx`)
+  }
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle search with debounce =========== //
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchValue(value)
+      }, 500),
+    []
+  )
+
+  const handleChangeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    debouncedSearch(value)
+  }
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.clear()
+    }
+  }, [debouncedSearch])
+
+  const handleTagChange = (tags: string[]) => {
+    setSelectedTags(tags)
+  }
+
+  const handleCategoryChange = (categories: string[]) => {
+    setSelectedCategories(categories)
+  }
+
+  const handleStatusChange = (status: boolean) => {
+    setSelectedStatus(status)
+  }
+
+  const handleRefresh = () => {
+    setSelectedTags([])
+    setSelectedCategories([])
+    setSelectedStatus(null)
+    setSearchValue('')
+  }
+
+  const columns = useMemo<ColumnsType<IBlog>>(() => [
     {
-      title: 'Title',
+      title: 'Tiêu đề',
       dataIndex: 'title',
       key: 'title',
       sorter: (a, b) => a.title.localeCompare(b.title),
@@ -58,11 +220,12 @@ const BlogsPage = () => {
         <div className='flex items-center space-x-3'>
           <div className='hidden sm:block flex-shrink-0'>
             <img
-              src={record.coverImage || 'https://picsum.photos/200/300'}
+              src={record.coverImage || 'https://res.cloudinary.com/dgomdpkze/image/upload/istockphoto-1222357475-612x612-removebg-preview_yzoumz.png'}
               alt={record.title}
               width={48}
               height={48}
               className='rounded object-cover'
+              loading='lazy'
             />
           </div>
           <div>
@@ -75,24 +238,20 @@ const BlogsPage = () => {
       )
     },
     {
-      title: 'Author',
+      title: 'Tác  giả',
       dataIndex: 'author',
       key: 'author',
       render: (author) => author.fullname,
       responsive: ['md']
     },
     {
-      title: 'Status',
+      title: 'Trạng thái',
       dataIndex: 'isPublic',
       key: 'isPublic',
-      filters: [
-        { text: 'Published', value: 'published' },
-        { text: 'Draft', value: 'draft' },
-        { text: 'Scheduled', value: 'scheduled' }
-      ]
+      render: (isPublic: boolean) => (isPublic ? 'Công khai' : 'Riêng tư')
     },
     {
-      title: 'Date',
+      title: 'Ngày xuất bản',
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (date) => new Date(date).toLocaleDateString(),
@@ -119,7 +278,27 @@ const BlogsPage = () => {
       responsive: ['lg']
     },
     {
-      title: 'Views',
+      title: 'Danh mục',
+      dataIndex: 'categories',
+      key: 'categories',
+      render: (categories: { _id: string, name: string }[]) => (
+        <div className='flex flex-wrap gap-1'>
+          {categories?.slice(0, 2).map((category) => (
+            <Tag key={category._id} className='m-0'>
+              {category.name}
+            </Tag>
+          ))}
+          {categories?.length > 2 && (
+            <Tooltip title={categories.slice(2).join(', ')}>
+              <Tag className='m-0'>+{categories.length - 2}</Tag>
+            </Tooltip>
+          )}
+        </div>
+      ),
+      responsive: ['lg']
+    },
+    {
+      title: 'Lượt xem',
       dataIndex: 'views',
       key: 'views',
       sorter: (a, b) => a.views - b.views,
@@ -127,50 +306,50 @@ const BlogsPage = () => {
       responsive: ['md']
     },
     {
-      title: 'Actions',
+      title: 'Hành động',
       key: 'actions',
       width: 100,
       render: (_, record) => (
-        <Space size='middle'>
+        <Space size='large'>
           <Link to={`/blogs/update/${record._id}`}><EditOutlined /></Link>
           <Link to={`/blogs/view/${record._id}`}><EyeOutlined /></Link>
           <Popconfirm
-            title="Delete the task"
-            description="Are you sure to delete this task?"
+            title="Xóa bài viết"
+            description="Bạn chắc chắn muốn xóa bài viết?"
             okText="Yes"
             cancelText="No"
             onConfirm={() => confirmDelete(record._id)}
           >
-            <Button danger type='text'><DeleteOutlined /></Button>
+            <DeleteOutlined style={{ color: '#1677ff' }} />
           </Popconfirm>
         </Space>
       )
     }
-  ]
+  ], [confirmDelete])
 
   return (
     <div>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-800'>Blog Posts</h1>
-          <p className='text-gray-500'>Manage and browse your blog content</p>
+          <h1 className='text-2xl font-bold text-gray-800'>Danh sách bài viết</h1>
+          <p className='text-gray-500'>Quản lý và chia sẻ bài viết</p>
         </div>
         <Link to='/blogs/create'>
           <Button type='primary' icon={<PlusOutlined />} className='mt-4 sm:mt-0 bg-blue-600 hover:bg-blue-700'>
-            Add New Post
+            Tạo bài viết mới
           </Button>
         </Link>
       </div>
 
-      <div className='bg-white rounded-lg shadow-md p-6 mb-8'>
+      <div className='bg-white rounded-lg'>
         <div className='flex flex-col lg:flex-row gap-4 mb-6'>
-          {/* <div className='flex-1'>
+          <div className='flex-1'>
             <Search
-              placeholder='Search posts...'
+              placeholder='Tìm kiếm bài viết...'
               allowClear
               enterButton={<SearchOutlined />}
               size='large'
-              onSearch={handleSearch}
+              onChange={handleChangeSearch}
               className='w-full'
             />
           </div>
@@ -181,15 +360,15 @@ const BlogsPage = () => {
               style={{ minWidth: '180px' }}
               placeholder={
                 <>
-                  <FilterOutlined /> Filter by tags
+                  <FilterOutlined /> Lọc theo Tags
                 </>
               }
               onChange={handleTagChange}
               className='w-full sm:w-auto'
             >
-              {allTags.map((tag) => (
-                <Option key={tag} value={tag}>
-                  {tag}
+              {listTags?.map((tag) => (
+                <Option key={tag._id} value={tag._id}>
+                  {tag.name}
                 </Option>
               ))}
             </Select>
@@ -198,44 +377,52 @@ const BlogsPage = () => {
               mode='multiple'
               allowClear
               style={{ minWidth: '180px' }}
-              placeholder='Filter by status'
+              placeholder='Lọc theo trạng thái'
               onChange={handleStatusChange}
               className='w-full sm:w-auto'
             >
-              <Option value='published'>Published</Option>
-              <Option value='draft'>Draft</Option>
-              <Option value='scheduled'>Scheduled</Option>
+              <Option value='true'>Công khai</Option>
+              <Option value='false'>Riêng tư</Option>
             </Select>
 
             <Select
               mode='multiple'
               allowClear
               style={{ minWidth: '180px' }}
-              placeholder='Filter by author'
-              onChange={handleAuthorChange}
+              placeholder='Lọc theo danh mục'
+              onChange={handleCategoryChange}
               className='w-full sm:w-auto'
             >
-              {allAuthors.map((author) => (
-                <Option key={author} value={author}>
-                  {author}
+              {listCategories?.map((category) => (
+                <Option key={category._id} value={category._id}>
+                  {category.name}
                 </Option>
               ))}
             </Select>
 
-            <Button icon={<ReloadOutlined />} onClick={handleRefresh} />
-            <Button icon={<ExportOutlined />}>Export</Button>
-          </div> */}
+            <Button icon={<ReloadOutlined />} className="bg-gray-100 hover:bg-gray-200" onClick={handleRefresh} />
+            <Button icon={<ExportOutlined />} className="bg-green-600 hover:bg-green-700 text-white" onClick={() => exportToExcel(listBlogs || [], 'blogs')}>Export</Button>
+          </div>
         </div>
 
         <Table
           columns={columns}
           dataSource={listBlogs || []}
           rowKey='_id'
-          // pagination={pagination}
+          pagination={{
+            pageSize: pagination.pageSize,
+            current: pagination.current,
+            total: pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: ['5', '10', '20', '50'],
+            showTotal: (total) => `Tổng cộng ${total} mục`,
+            disabled: isPlaceholderData
+          }}
           loading={isLoading}
-          // onChange={handleTableChange}
+          onChange={handleTableChange}
           scroll={{ x: 'max-content' }}
           className='blog-table'
+          locale={{ emptyText: 'Không có dữ liệu' }}
         />
       </div>
     </div>

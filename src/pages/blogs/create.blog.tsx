@@ -1,4 +1,4 @@
-import {message } from 'antd'
+import { message } from 'antd'
 import FormBlog from './form.blog'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
@@ -23,8 +23,11 @@ const CreateBlog = () => {
   })
 
   const handleSubmit = async (values: IBlogFormData) => {
-    console.log('🚀 ~ handleSubmit ~ values:', values)
-    handleCreateBlogs.mutate(values)
+    const formatValue = {
+      ...values,
+      coverImage: values.coverImage?.length ? values.coverImage : ''
+    }
+    handleCreateBlogs.mutate(formatValue)
   }
 
   return (

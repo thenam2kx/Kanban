@@ -7,12 +7,19 @@ import {
   ClockCircleOutlined,
   UserOutlined,
   CommentOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
-import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'react-router'
-import { fetchInfoBlogAPI } from '@/apis/blog.api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useParams } from 'react-router'
+import { deleteBlogAPI, fetchInfoBlogAPI, updateBlogAPI } from '@/apis/blog.api'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 // Mock data for the blog post
 const blogPost = {
@@ -113,6 +120,8 @@ const ViewBlogsPage = () => {
   const { id } = useParams()
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const { data: infoBlogs } = useQuery({
     queryKey: ['fetch-info-blogs', id],
@@ -126,33 +135,67 @@ const ViewBlogsPage = () => {
     }
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await deleteBlogAPI(id as string)
+      if (res.data) {
+        navigate('/blogs')
+        return res.data
+      } else {
+        throw new Error('Xóa bài viết thất bại')
+      }
+    },
+    onSuccess: () => {
+      messageApi.success('Post deleted successfully')
+      setIsDeleteModalOpen(false)
+    },
+    onError: (error) => {
+      messageApi.error(error.message || 'An error occurred while deleting the post')
+      setIsDeleteModalOpen(true)
+    }
+  })
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async () => {
+      if (!infoBlogs) {
+        return 'error'
+      }
+      const { title, content, excerpt, categories, tags, coverImage } = infoBlogs
+      const data = {
+        title,
+        content,
+        excerpt,
+        tags: tags.map(item => item._id),
+        categories: categories.map(item => item._id),
+        isPublic: !infoBlogs.isPublic,
+        coverImage
+      }
+      const res = await updateBlogAPI(data, id as string)
+      if (res.data) {
+        queryClient.invalidateQueries({ queryKey: ['fetch-info-blogs', id] })
+        return res.data
+      } else {
+        throw new Error('Cập nhật trạng thái thất bại')
+      }
+    },
+    onSuccess: () => {
+      messageApi.success('Cập nhật trạng thái thành công!')
+    },
+    onError: (error) => {
+      messageApi.error(error.message || 'Có lỗi sảy ra, không thể cập nhật trạng thái bài viết')
+    }
+  })
+
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    return dayjs.utc(dateString).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY')
   }
 
   const handlePublishToggle = () => {
-    messageApi.success(
-      blogPost.status === 'published' ? 'Post unpublished successfully' : 'Post published successfully'
-    )
+    toggleStatusMutation.mutate()
   }
 
-  const handleEdit = () => {
-    messageApi.info('Redirecting to edit page...')
-  }
-
-  const handleDelete = () => {
-    setIsDeleteModalOpen(true)
-  }
-
-  const confirmDelete = () => {
-    messageApi.success('Post deleted successfully')
+  const confirmDelete = async () => {
+    await deleteMutation.mutate()
     setIsDeleteModalOpen(false)
   }
 
@@ -252,7 +295,7 @@ const ViewBlogsPage = () => {
             {
               title: 'Actions',
               key: 'actions',
-              render: (_, record) => <Button size='small'>View</Button>
+              render: () => <Button size='small'>View</Button>
             }
           ]}
         />
@@ -264,7 +307,7 @@ const ViewBlogsPage = () => {
       children: (
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           <Card>
-            <Statistic title='Views' value={blogPost.views} prefix={<EyeOutlined />} />
+            <Statistic title='Views' value={infoBlogs?.views} prefix={<EyeOutlined />} />
           </Card>
           <Card>
             <Statistic title='Likes' value={blogPost.likes} prefix={<CheckCircleOutlined />} />
@@ -297,17 +340,20 @@ const ViewBlogsPage = () => {
         </div>
 
         <div className='flex gap-2'>
-          <Button icon={<EyeOutlined />} onClick={handlePreview}>
-            Preview
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+            Trở lại
           </Button>
-          <Button type='primary' icon={<EditOutlined />} onClick={handleEdit}>
-            Edit
+          <Button icon={<EyeOutlined />} onClick={handlePreview}>
+            Xem bài viết
+          </Button>
+          <Button type='primary' icon={<EditOutlined />} onClick={() => navigate(`/blogs/update/${id}`)}>
+            Sửa
           </Button>
           <Button onClick={handlePublishToggle} type={infoBlogs?.isPublic ? 'default' : 'primary'}>
-            {infoBlogs?.isPublic ? 'Unpublish' : 'Publish'}
+            {infoBlogs?.isPublic ? 'Ẩn bài viết' : 'Công khai'}
           </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
-            Delete
+          <Button danger icon={<DeleteOutlined />} onClick={() => setIsDeleteModalOpen(true)}>
+            Xóa
           </Button>
         </div>
       </div>
@@ -316,11 +362,12 @@ const ViewBlogsPage = () => {
       <Card className='mb-6'>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
           <div>
-            <h3 className='text-sm font-medium text-gray-500'>Categories</h3>
+            <h3 className='text-sm font-medium text-gray-500'>Danh mục</h3>
             <div className='mt-1 flex flex-wrap gap-1'>
-              {blogPost.categories.map((category) => (
-                <Tag key={category} color='blue'>
-                  {category}
+              {infoBlogs?.categories.length === 0 && <Tag color='red'>Chưa có danh mục</Tag>}
+              {infoBlogs?.categories.map((category) => (
+                <Tag key={category._id} color='blue'>
+                  {category.name}
                 </Tag>
               ))}
             </div>
@@ -328,19 +375,20 @@ const ViewBlogsPage = () => {
           <div>
             <h3 className='text-sm font-medium text-gray-500'>Tags</h3>
             <div className='mt-1 flex flex-wrap gap-1'>
-              {blogPost.tags.map((tag) => (
-                <Tag key={tag} color='cyan'>
-                  {tag}
+              {infoBlogs?.categories.length === 0 && <Tag color='red'>Chưa có Tags</Tag>}
+              {infoBlogs?.tags.map((tag) => (
+                <Tag key={tag._id} color='cyan'>
+                  {tag.name}
                 </Tag>
               ))}
             </div>
           </div>
           <div>
-            <h3 className='text-sm font-medium text-gray-500'>Last Updated</h3>
+            <h3 className='text-sm font-medium text-gray-500'>Lần cập nhật cuối</h3>
             <p className='mt-1'>{formatDate(blogPost.updatedAt)}</p>
           </div>
           <div>
-            <h3 className='text-sm font-medium text-gray-500'>Read Time</h3>
+            <h3 className='text-sm font-medium text-gray-500'>Thời gian đọc</h3>
             <p className='mt-1'>{blogPost.readTime}</p>
           </div>
         </div>
@@ -351,14 +399,15 @@ const ViewBlogsPage = () => {
 
       {/* Delete Confirmation Modal */}
       <Modal
-        title='Delete Post'
+        title='Xác nhận xóa bài viết'
         open={isDeleteModalOpen}
         onOk={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
-        okText='Delete'
+        cancelText='Hủy'
+        okText='Xác nhận'
         okButtonProps={{ danger: true }}
       >
-        <p>Are you sure you want to delete this post? This action cannot be undone.</p>
+        <p>Bạn chắc chắn muốn xóa bài viết này?</p>
       </Modal>
     </div>
   )

@@ -1,15 +1,16 @@
 import { useRef, useState } from 'react'
 import { Button, Form, Input, Upload, message, Spin, Switch, Image, Row, Col, Collapse, Typography, Checkbox, Space } from 'antd'
-import { UploadOutlined, FormOutlined, EyeOutlined, CalendarOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons'
+import { UploadOutlined, FormOutlined, EyeOutlined, CalendarOutlined } from '@ant-design/icons'
 import type { UploadFile, UploadProps } from 'antd'
 import ReactQuill from 'react-quill'
+import Quill from 'quill'
 import 'react-quill/dist/quill.snow.css'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { fetchListTagsAPI } from '@/apis/tags.api'
 import { uploadImageCloudinaryAPI } from '@/apis/apis'
 import { fetchListCategoriesBlogAPI } from '@/apis/category.blog.apis'
+import { useNavigate } from 'react-router'
 
-const { Panel } = Collapse
 const { Text } = Typography
 
 interface IProps {
@@ -19,9 +20,15 @@ interface IProps {
   handleSubmit: (values: IBlogFormData) => Promise<void>
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Size = Quill.import('formats/size') as any
+Size.whitelist = ['12px', '14px', '16px', '18px', '20px', '24px', '28px']
+Quill.register(Size, true)
+
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
+    [{ size: ['12px', '14px', '16px', '18px', '20px', '24px', '28px'] }],
     ['bold', 'italic', 'underline', 'strike'],
     [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
     [{ align: [] }],
@@ -34,6 +41,7 @@ const modules = {
 }
 const formats = [
   'header',
+  'size',
   'bold',
   'italic',
   'underline',
@@ -65,7 +73,8 @@ const FormBlog = (props: IProps) => {
   const [form] = Form.useForm()
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [content, setContent] = useState(initialValues?.content || '')
-
+  const [coverImageUrl, setCoverImageUrl] = useState<string>('')
+  const navigate = useNavigate()
   const quillRef = useRef(null)
 
   const { data: listTags } = useQuery({
@@ -102,8 +111,9 @@ const FormBlog = (props: IProps) => {
       const res = await uploadImageCloudinaryAPI(formData)
       if (res.data) {
         const imageUrl = res.data.url
+        setCoverImageUrl(imageUrl)
         form.setFieldsValue({ coverImage: imageUrl })
-        setFileList([file])
+        setFileList([{ ...file, thumbUrl: imageUrl, name: file.name as string }])
       } else {
         message.error('Failed to upload image')
       }
@@ -122,22 +132,162 @@ const FormBlog = (props: IProps) => {
       const newFileList = fileList.slice()
       newFileList.splice(index, 1)
       setFileList(newFileList)
+      setCoverImageUrl('')
+      form.setFieldsValue({ coverImage: '' })
     },
     beforeUpload: (file) => {
       setFileList([...fileList, file])
+      handleUploadImage(file)
       return false
     },
     fileList,
     listType: 'picture'
   }
 
-  const expandIcon = ({ isActive }: { isActive?: boolean }) => {
-    return isActive ? <CaretUpOutlined /> : <CaretDownOutlined />
-  }
-
   const onPreview = () => {
     message.info('This feature is not implemented yet')
   }
+
+  const collapseItems = [
+    {
+      key: '1',
+      label: 'Xuất bản',
+      children:(
+        <>
+          <div className='mb-3'>
+            <div className='flex items-center mb-1'>
+              <FormOutlined className='mr-2 text-gray-500' />
+              <Form.Item label='Public' name='isPublic' valuePropName='checked' hidden>
+                <Switch defaultChecked />
+              </Form.Item>
+              <Text className='text-gray-600'>Trạng thái: </Text>
+              <Text strong className='ml-1'>
+                Draft
+              </Text>
+              <Button type='link' className='p-0 ml-2 text-blue-500'>
+                Sửa
+              </Button>
+            </div>
+
+            <div className='flex items-center mb-1'>
+              <EyeOutlined className='mr-2 text-gray-500' />
+              <Text className='text-gray-600'>Hiển thị: </Text>
+              <Text strong className='ml-1'>
+                Công khai
+              </Text>
+              <Button type='link' className='p-0 ml-2 text-blue-500'>
+                Sửa
+              </Button>
+            </div>
+
+            <div className='flex items-center mb-1'>
+              <CalendarOutlined className='mr-2 text-gray-500' />
+              <Text className='text-gray-600'>Xuất bản </Text>
+              <Text strong className='ml-1'>
+                Hiện tại
+              </Text>
+              <Button type='link' className='p-0 ml-2 text-blue-500'>
+                Sửa
+              </Button>
+            </div>
+          </div>
+
+          <div className='flex justify-end gap-3'>
+            <Button
+              onClick={onPreview}
+              className='border border-blue-500 text-blue-500 hover:text-blue-600 hover:border-blue-600'
+            >
+              Xem trước
+            </Button>
+
+
+            <Button type='default' className='bg-gray-100'>
+              Lưu nháp
+            </Button>
+            <Button type='primary' htmlType='submit' loading={isLoading} className='bg-blue-600 hover:bg-blue-700'>
+              {initialValues ? 'Lưu' : 'Xuất bản'}
+            </Button>
+          </div>
+        </>
+      )
+    },
+    {
+      key: '2',
+      label: 'Danh mục',
+      children:(
+        <>
+          <Form.Item name='categories'>
+            <Checkbox.Group className='w-full'>
+              <Space direction='vertical' className='w-full'>
+                {
+                  listCategories && listCategories?.map((category) => (
+                    <Checkbox value={category._id} key={category._id}>{category.name}</Checkbox>
+                  ))
+                }
+              </Space>
+            </Checkbox.Group>
+          </Form.Item>
+
+          <Button type='link' className='p-0 mt-2 text-blue-500 flex items-center' onClick={() => navigate('/blogs-category')}>
+            <span className='mr-1'>+</span> Add Category
+          </Button>
+        </>
+      )
+    },
+    {
+      key: '3',
+      label: 'Tags',
+      children:(
+        <>
+          <Form.Item name='tags'>
+            <Checkbox.Group className='w-full'>
+              <Space direction='vertical' className='w-full'>
+                {
+                  listTags && listTags?.map((tag) => (
+                    <Checkbox value={tag._id} key={tag._id}>{tag.name}</Checkbox>
+                  ))
+                }
+              </Space>
+            </Checkbox.Group>
+          </Form.Item>
+          <Button type='link' className='p-0 mt-2 text-blue-500 flex items-center'>
+            <span className='mr-1'>+</span> Add Tags
+          </Button>
+        </>
+      )
+    },
+    {
+      key: '4',
+      label: 'Ảnh đại diện',
+      children:(
+        <>
+          <div className='flex w-full'>
+            <Form.Item name='coverImage' label='Hình ảnh' className='w-full'>
+              {
+                coverImageUrl.length >= 0 && (
+                  // onChange={() => handleUploadImage(fileList[0])}
+                  <Upload {...uploadProps} maxCount={1} className='w-full'>
+                    <Button icon={<UploadOutlined />}>{initialValues ? 'Đổi ảnh' : 'Chọn ảnh'} </Button>
+                  </Upload>
+
+                )
+              }
+              {
+                initialValues?.coverImage && coverImageUrl.length <= 0 && (
+                  <Image
+                    width={'100%'}
+                    className='mt-5'
+                    src={initialValues?.coverImage}
+                  />
+                )
+              }
+            </Form.Item>
+          </div>
+        </>
+      )
+    }
+  ]
+
 
   return (
     <div>
@@ -183,150 +333,7 @@ const FormBlog = (props: IProps) => {
             {/* Right Column */}
             <Col span={6}>
               <div className='w-full max-w-md border border-gray-200 rounded-md bg-white'>
-                <Collapse defaultActiveKey={['1', '2', '4']} expandIcon={expandIcon} className='border-0'>
-                  <Panel
-                    header={
-                      <div className='flex justify-between items-center w-full'>
-                        <span className='font-medium text-base'>Xuất bản</span>
-                      </div>
-                    }
-                    key='1'
-                    className='border-0 border-b border-gray-200'
-                  >
-
-                    <div className='mb-3'>
-                      <div className='flex items-center mb-1'>
-                        <FormOutlined className='mr-2 text-gray-500' />
-                        <Form.Item label='Public' name='isPublic' valuePropName='checked' hidden>
-                          <Switch defaultChecked />
-                        </Form.Item>
-                        <Text className='text-gray-600'>Trạng thái: </Text>
-                        <Text strong className='ml-1'>
-                          Draft
-                        </Text>
-                        <Button type='link' className='p-0 ml-2 text-blue-500'>
-                          Sửa
-                        </Button>
-                      </div>
-
-                      <div className='flex items-center mb-1'>
-                        <EyeOutlined className='mr-2 text-gray-500' />
-                        <Text className='text-gray-600'>Hiển thị: </Text>
-                        <Text strong className='ml-1'>
-                          Công khai
-                        </Text>
-                        <Button type='link' className='p-0 ml-2 text-blue-500'>
-                          Sửa
-                        </Button>
-                      </div>
-
-                      <div className='flex items-center mb-1'>
-                        <CalendarOutlined className='mr-2 text-gray-500' />
-                        <Text className='text-gray-600'>Xuất bản </Text>
-                        <Text strong className='ml-1'>
-                          Hiện tại
-                        </Text>
-                        <Button type='link' className='p-0 ml-2 text-blue-500'>
-                          Sửa
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className='flex justify-end gap-3'>
-                      <Button
-                        onClick={onPreview}
-                        className='border border-blue-500 text-blue-500 hover:text-blue-600 hover:border-blue-600'
-                      >
-                        Xem trước
-                      </Button>
-
-
-                      <Button type='default' className='bg-gray-100'>
-                        Lưu nháp
-                      </Button>
-                      <Button type='primary' htmlType='submit' loading={isLoading} className='bg-blue-600 hover:bg-blue-700'>
-                        {initialValues ? 'Lưu' : 'Xuất bản'}
-                      </Button>
-                    </div>
-                  </Panel>
-
-                  <Panel
-                    header={
-                      <div className='flex justify-between items-center w-full'>
-                        <span className='font-medium text-base'>Danh mục</span>
-                      </div>
-                    }
-                    key='2'
-                    className='border-0 border-b border-gray-200'
-                  >
-                    <div className='mb-3'>
-                      <Checkbox.Group className='w-full'>
-                        <Space direction='vertical' className='w-full'>
-                          {
-                            listCategories && listCategories?.map((category) => (
-                              <Checkbox value={category._id} key={category._id}>{category.name}</Checkbox>
-                            ))
-                          }
-                        </Space>
-                      </Checkbox.Group>
-
-                      <Button type='link' className='p-0 mt-2 text-blue-500 flex items-center'>
-                        <span className='mr-1'>+</span> Add Category
-                      </Button>
-                    </div>
-                  </Panel>
-
-                  <Panel
-                    header={
-                      <div className='flex justify-between items-center w-full'>
-                        <span className='font-medium text-lg'>Tags</span>
-                      </div>
-                    }
-                    key='3'
-                    className='border-0'
-                  >
-                    <Form.Item name='tags' rules={[{ required: true, message: 'Tag không được để trống!' }]}>
-                      <Checkbox.Group className='w-full'>
-                        <Space direction='vertical' className='w-full'>
-                          {
-                            listTags && listTags?.map((tag) => (
-                              <Checkbox value={tag._id} key={tag._id}>{tag.name}</Checkbox>
-                            ))
-                          }
-                        </Space>
-                      </Checkbox.Group>
-                    </Form.Item>
-                    <Button type='link' className='p-0 mt-2 text-blue-500 flex items-center'>
-                      <span className='mr-1'>+</span> Add Tags
-                    </Button>
-                  </Panel>
-
-                  <Panel
-                    header={
-                      <div className='flex justify-between items-center w-full'>
-                        <span className='font-medium text-base'>Ảnh đại diện</span>
-                      </div>
-                    }
-                    key='4'
-                    className='border-0'
-                  >
-                    <div className='flex w-full'>
-                      <Form.Item name='coverImage' label='Hình ảnh' className='w-full'>
-                        <Upload {...uploadProps} onChange={() => handleUploadImage(fileList[0])} className='w-full'>
-                          <Button icon={<UploadOutlined />} >Chọn ảnh</Button>
-                        </Upload>
-                        {
-                          initialValues?.coverImage && (
-                            <Image
-                              width={200}
-                              src={initialValues?.coverImage}
-                            />
-                          )
-                        }
-                      </Form.Item>
-                    </div>
-                  </Panel>
-                </Collapse>
+                <Collapse items={collapseItems} defaultActiveKey={['1', '2', '4']} />
               </div>
             </Col>
           </Row>

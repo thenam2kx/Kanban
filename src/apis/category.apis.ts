@@ -2,7 +2,7 @@ import axios from '@/config/axios.customize'
 
 export const fetchListCategoryAPI = async ({ current, pageSize }: { current: number, pageSize: number }) => {
   const url = `/api/v1/categories?current=${current}&pageSize=${pageSize}`
-  return axios.get<IBackendResponse<IResponseList<ICategory[]>>>(url)
+  return axios.get<IBackendResponse<IResponseList<ICategory>>>(url)
 }
 
 export const fetchInfoCategoryAPI = async (categoryId: string) => {

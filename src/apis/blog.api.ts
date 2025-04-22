@@ -1,7 +1,12 @@
 import axios from '@/config/axios.customize'
+import { IParamsSearch } from '@/pages/blogs/blogs.page'
 
-export const fetchListBlogAPI = async () => {
-  const url = '/api/v1/blogs?current=1&pageSize=10&sort=-createdAt&populate=tags,author&fields=tags.name,author.fullname'
+export const fetchListBlogAPI = async (
+  { current = 1, pageSize = 5, paramsSearch }:
+  { current?: number, pageSize?: number, paramsSearch: IParamsSearch }
+) => {
+  const url = `/api/v1/blogs?current=${current}&pageSize=${pageSize}&sort=-createdAt&populate=tags,author,categories&fields=tags.name,author.fullname,categories.name&title=/${paramsSearch?.search || ''}/i&tags=${paramsSearch?.tags.join(', ') || ''}&categories=${paramsSearch?.categories.join(', ') || ''}&isPublic=${paramsSearch?.status || ''}`
+  console.log('🚀 ~ url:', url)
   return axios.get<IBackendResponse<IResponseList<IBlog>>>(url)
 }
 
