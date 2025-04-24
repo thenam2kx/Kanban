@@ -115,6 +115,12 @@ declare global {
   //   deletedAt?: Date;
   // }
 
+  interface IPagination {
+    current: number
+    pageSize: number
+    total: number
+  }
+
   interface IMeta {
     current: number
     pages: number

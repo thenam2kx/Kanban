@@ -17,6 +17,7 @@ import UpdateBlogPage from '@/pages/blogs/update.blog.page'
 import ViewBlogPage from '@/pages/blogs/view.blog.page'
 import DashboardPage from '@/pages/dashboard/dashboard.page'
 import CategoryBlogPage from '@/pages/category-blog/category.blog.page'
+import TagsPage from '@/pages/tags/tags.page'
 
 
 const Routers = () => {
@@ -38,6 +39,7 @@ const Routers = () => {
           <Route path='/blogs/update/:id' element={<UpdateBlogPage />} />
           <Route path='/blogs/view/:id' element={<ViewBlogPage />} />
           <Route path='/blogs-category' element={<CategoryBlogPage />} />
+          <Route path='/tags' element={<TagsPage />} />
           {/* <Route index element={<DashboardPage />} />
           <Route path='/orders' element={<OrderPage />} />
           <Route path='/customers' element={<CustomerPage />} />

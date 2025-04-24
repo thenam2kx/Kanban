@@ -8,4 +8,9 @@ declare global {
     slug: string
     isPublic: boolean
   }
+
+  interface IFormTags {
+    name: string
+    isPublic: boolean
+  }
 }

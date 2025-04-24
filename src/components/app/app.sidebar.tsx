@@ -1,7 +1,7 @@
 import { signoutAPI } from '@/apis/auth.apis'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { signout } from '@/redux/slices/auth.slice'
-import { DashboardOutlined, ProductOutlined, UserOutlined } from '@ant-design/icons'
+import { BarsOutlined, DashboardOutlined, FormOutlined, ProductOutlined, TagsOutlined, UserOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
 import { Button, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
@@ -32,7 +32,7 @@ const items: MenuProps['items'] = [
       },
       {
         key: '/categories',
-        icon: <UserOutlined />,
+        icon: <BarsOutlined />,
         label: <Link to={'/categories'} style={{ color: 'inherit' }}>Danh mục</Link>
       },
       {
@@ -42,13 +42,18 @@ const items: MenuProps['items'] = [
       },
       {
         key: '/blogs',
-        icon: <ProductOutlined />,
+        icon: <FormOutlined />,
         label: <Link to={'/blogs'}>Bài viết</Link>
       },
       {
         key: '/blogs-category',
-        icon: <ProductOutlined />,
+        icon: <BarsOutlined />,
         label: <Link to={'/blogs-category'}>Danh mục bài viết</Link>
+      },
+      {
+        key: '/tags',
+        icon: <TagsOutlined />,
+        label: <Link to={'/tags'}>Thẻ bài viết</Link>
       }
     ]
   }

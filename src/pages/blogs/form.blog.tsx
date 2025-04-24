@@ -261,7 +261,7 @@ const FormBlog = (props: IProps) => {
       label: 'Ảnh đại diện',
       children:(
         <>
-          <div className='flex w-full'>
+          <div className='flex flex-col w-full'>
             <Form.Item name='coverImage' label='Hình ảnh' className='w-full'>
               {
                 coverImageUrl.length >= 0 && (
@@ -272,16 +272,15 @@ const FormBlog = (props: IProps) => {
 
                 )
               }
-              {
-                initialValues?.coverImage && coverImageUrl.length <= 0 && (
-                  <Image
-                    width={'100%'}
-                    className='mt-5'
-                    src={initialValues?.coverImage}
-                  />
-                )
-              }
             </Form.Item>
+            {
+              initialValues?.coverImage && coverImageUrl.length <= 0 && (
+                <Image
+                  width={'100%'}
+                  src={initialValues?.coverImage}
+                />
+              )
+            }
           </div>
         </>
       )

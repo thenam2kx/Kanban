@@ -24,12 +24,6 @@ const { Search } = Input
 const { Option } = Select
 
 
-interface IPagination {
-  current: number
-  pageSize: number
-  total: number
-}
-
 export interface IParamsSearch {
   search: string
   tags: string[]
@@ -50,7 +44,11 @@ const BlogsPage = () => {
   })
 
   const queryClient = useQueryClient()
-  // Fetching blog posts
+
+
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Fetching list blogs =========== //
   const { data: listBlogs, isLoading, isPlaceholderData } = useQuery({
     queryKey: [
       'fetch-list-blogs',
@@ -83,11 +81,13 @@ const BlogsPage = () => {
     placeholderData: keepPreviousData
   })
 
-  // Fetching list tags
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Fetching list tags =========== //
   const { data: listTags } = useQuery({
     queryKey: ['fetch-list-tags'],
     queryFn: async () => {
-      const res = await fetchListTagsAPI()
+      const res = await fetchListTagsAPI({ current: 1, pageSize: 100 })
       if (res.data) {
         return res.data.result
       } else {
@@ -97,7 +97,9 @@ const BlogsPage = () => {
     placeholderData: keepPreviousData
   })
 
-  // Fetching list categories
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Fetching list categories =========== //
   const { data: listCategories } = useQuery({
     queryKey: ['fetch-list-categories'],
     queryFn: async () => {
@@ -111,6 +113,12 @@ const BlogsPage = () => {
     placeholderData: keepPreviousData
   })
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle delete blog =========== //
   const handleDeleteBlogs = useMutation({
     mutationFn: async (id: string) => {
       const res = await deleteBlogAPI(id)
@@ -133,6 +141,12 @@ const BlogsPage = () => {
     handleDeleteBlogs.mutate(id)
   }, [handleDeleteBlogs])
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle change paginate table =========== //
   const handleTableChange = (
     pagination: TablePaginationConfig
     // filters: Record<string, FilterValue | null>,
@@ -146,6 +160,12 @@ const BlogsPage = () => {
     })
   }
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle export data to excel =========== //
   const exportToExcel = (data: IBlog[], fileName: string) => {
     const exportData = data.map(blog => ({
       ID: blog._id,
@@ -160,7 +180,7 @@ const BlogsPage = () => {
     }))
 
     const worksheet = XLSX.utils.json_to_sheet(exportData)
-    const workbook = XLSX.utils.book_new();
+    const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Blogs')
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' })
@@ -191,18 +211,41 @@ const BlogsPage = () => {
     }
   }, [debouncedSearch])
 
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle filter with tags =========== //
   const handleTagChange = (tags: string[]) => {
     setSelectedTags(tags)
   }
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle filter with category =========== //
   const handleCategoryChange = (categories: string[]) => {
     setSelectedCategories(categories)
   }
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle filter with status =========== //
   const handleStatusChange = (status: boolean) => {
     setSelectedStatus(status)
   }
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Handle refresh =========== //
   const handleRefresh = () => {
     setSelectedTags([])
     setSelectedCategories([])
@@ -210,6 +253,12 @@ const BlogsPage = () => {
     setSearchValue('')
   }
 
+
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ==================================================== //
+  // ============ Column data =========== //
   const columns = useMemo<ColumnsType<IBlog>>(() => [
     {
       title: 'Tiêu đề',
@@ -329,7 +378,7 @@ const BlogsPage = () => {
 
   return (
     <div>
-      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8'>
+      <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4'>
         <div>
           <h1 className='text-2xl font-bold text-gray-800'>Danh sách bài viết</h1>
           <p className='text-gray-500'>Quản lý và chia sẻ bài viết</p>
